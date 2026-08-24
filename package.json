@@ -1,0 +1,16 @@
+{
+  "name": "scpa-volleyball-officials",
+  "version": "1.0.0",
+  "description": "Website for the South Central PA Chapter of Volleyball Officials",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js"
+  },
+  "dependencies": {
+    "better-sqlite3": "^11.7.0",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1",
+    "xlsx": "^0.18.5"
+  }
+}
