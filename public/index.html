@@ -810,10 +810,27 @@
 
       <!-- OFFICIALS ROSTER -->
 
-      <div
-        id="member-roster"
-        class="member-roster-section"
-      >
+      <div class="member-roster-toggle-wrap">
+
+  <button
+    type="button"
+    class="member-roster-toggle"
+    id="member-roster-toggle"
+    aria-expanded="false"
+    aria-controls="member-roster"
+  >
+    <span>Show Officials Roster</span>
+    <span class="member-roster-toggle-arrow">▼</span>
+  </button>
+
+</div>
+
+
+<div
+  id="member-roster"
+  class="member-roster-section"
+  style="display:none;"
+>
 
         <div class="member-roster-heading">
 
