@@ -417,28 +417,21 @@ nav .admin-link{
    BOARD MEMBERS
 ========================================================= */
 
-/*
-   Board cards are intentionally narrower than the other
-   website cards. This gives portrait photographs a more
-   natural appearance.
-*/
-
 .board-grid{
   display:grid;
-  grid-template-columns:repeat(3,280px);
-  gap:24px;
-  justify-content:center;
+  grid-template-columns:repeat(5,1fr);
+  gap:18px;
   align-items:start;
 }
 
 .board-card{
-  width:280px;
   background:#fff;
   border:1px solid var(--line);
-  border-radius:16px;
-  padding:16px;
+  border-radius:14px;
+  padding:14px;
   display:flex;
   flex-direction:column;
+  min-width:0;
   box-shadow:0 8px 24px rgba(16,35,63,.06);
   transition:transform .2s ease,box-shadow .2s ease;
 }
@@ -448,26 +441,17 @@ nav .admin-link{
   box-shadow:0 14px 35px rgba(16,35,63,.12);
 }
 
-
-/* Board member image area */
-
 .board-photo-wrap{
   width:100%;
-  height:220px;
+  height:165px;
   overflow:hidden;
-  border-radius:11px;
+  border-radius:10px;
   background:#eef1f4;
-  margin-bottom:16px;
+  margin-bottom:13px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
-
-
-/*
-   contain displays the complete photograph without
-   zooming or cropping.
-*/
 
 .board-photo{
   width:100%;
@@ -477,9 +461,6 @@ nav .admin-link{
   object-position:center;
 }
 
-
-/* Placeholder for members without a photo */
-
 .board-photo-placeholder{
   width:100%;
   height:100%;
@@ -488,38 +469,36 @@ nav .admin-link{
   justify-content:center;
   background:var(--navy);
   color:#fff;
-  font-size:38px;
+  font-size:34px;
   font-weight:800;
-  letter-spacing:.02em;
 }
 
-
 .board-card-content{
-  padding:0 2px 4px;
+  padding:0 2px 3px;
 }
 
 .board-card-content h3{
   margin:0 0 3px;
   color:var(--navy);
-  font-size:19px;
-  line-height:1.25;
+  font-size:17px;
+  line-height:1.2;
 }
 
 .board-position{
   color:#a47b1f;
   font-weight:800;
-  font-size:12px;
+  font-size:10.5px;
   text-transform:uppercase;
-  letter-spacing:.055em;
+  letter-spacing:.045em;
   line-height:1.4;
-  margin-bottom:10px;
+  margin-bottom:8px;
 }
 
 .board-card-content p{
   margin:0;
   color:var(--muted);
-  font-size:13px;
-  line-height:1.5;
+  font-size:12px;
+  line-height:1.45;
 }
 
 .board-empty{
@@ -527,6 +506,36 @@ nav .admin-link{
   padding:20px 0;
 }
 
+/* Large tablets / smaller desktops */
+@media(max-width:1100px){
+  .board-grid{
+    grid-template-columns:repeat(3,1fr);
+  }
+}
+
+/* Tablets */
+@media(max-width:800px){
+  .board-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+}
+
+/* Phones */
+@media(max-width:520px){
+  .board-grid{
+    grid-template-columns:1fr;
+  }
+
+  .board-card{
+    max-width:300px;
+    width:100%;
+    margin:auto;
+  }
+
+  .board-photo-wrap{
+    height:210px;
+  }
+}
 
 /* =========================================================
    ROSTER
