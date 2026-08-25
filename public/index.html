@@ -952,6 +952,80 @@
 
       </div>
 
+
+      <!-- ==================================================
+           MEMBER DOCUMENTS
+      ================================================== -->
+
+      <div class="member-documents-toggle-wrap">
+
+        <button
+          type="button"
+          class="member-roster-toggle"
+          id="member-documents-toggle"
+          aria-expanded="false"
+          aria-controls="member-documents"
+        >
+          <span>Show Chapter Documents</span>
+          <span class="member-documents-toggle-arrow">▼</span>
+        </button>
+
+      </div>
+
+
+      <div
+        id="member-documents"
+        class="member-documents-section"
+        style="display:none;"
+      >
+
+        <div class="member-roster-heading">
+
+          <div>
+            <p class="eyebrow">Member Library</p>
+            <h3>Chapter Documents</h3>
+          </div>
+
+          <div id="documents-meta"></div>
+
+        </div>
+
+
+        <div class="documents-toolbar">
+
+          <label>
+            Search Documents
+
+            <input
+              type="search"
+              id="documents-search"
+              placeholder="Search by title, category or description..."
+            >
+          </label>
+
+
+          <label>
+            Category
+
+            <select id="documents-category">
+              <option value="">All Categories</option>
+            </select>
+          </label>
+
+        </div>
+
+
+        <div
+          id="documents-list"
+          class="documents-grid"
+        >
+          <div class="loading">
+            Loading chapter documents...
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
   </div>
