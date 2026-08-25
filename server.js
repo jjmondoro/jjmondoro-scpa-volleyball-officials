@@ -10,13 +10,26 @@ const { createClient } = require("@supabase/supabase-js");
 const app = express();
 
 const PORT = process.env.PORT || 3000;
+
 const ADMIN_PASSWORD =
   process.env.ADMIN_PASSWORD || "change-this-password";
 
-const SESSION_SECRET = process.env.SESSION_SECRET;
-const SUPABASE_URL = process.env.SUPABASE_URL;
+const ROSTER_PASSWORD =
+  process.env.ROSTER_PASSWORD;
+
+const SESSION_SECRET =
+  process.env.SESSION_SECRET;
+
+const SUPABASE_URL =
+  process.env.SUPABASE_URL;
+
 const SUPABASE_SERVICE_ROLE_KEY =
   process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+
+/* =========================================================
+   REQUIRED ENVIRONMENT VARIABLES
+========================================================= */
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not configured.");
@@ -28,10 +41,22 @@ if (!SESSION_SECRET) {
   process.exit(1);
 }
 
-if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
-  console.error("Supabase API environment variables are not configured.");
+if (!ROSTER_PASSWORD) {
+  console.error("ROSTER_PASSWORD is not configured.");
   process.exit(1);
 }
+
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error(
+    "Supabase API environment variables are not configured."
+  );
+  process.exit(1);
+}
+
+
+/* =========================================================
+   DATABASE / SUPABASE
+========================================================= */
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
@@ -45,122 +70,275 @@ const supabase = createClient(
   SUPABASE_SERVICE_ROLE_KEY
 );
 
-const uploadDir = path.join(__dirname, "uploads");
-fs.mkdirSync(uploadDir, { recursive: true });
+
+/* =========================================================
+   FILE UPLOADS
+========================================================= */
+
+const uploadDir =
+  path.join(__dirname, "uploads");
+
+fs.mkdirSync(
+  uploadDir,
+  {
+    recursive: true
+  }
+);
+
 
 const excelUpload = multer({
   dest: uploadDir,
+
   limits: {
     fileSize: 10 * 1024 * 1024
   },
+
   fileFilter: (req, file, cb) => {
-    const ok = /\.(xlsx|xls)$/i.test(file.originalname);
+    const ok =
+      /\.(xlsx|xls)$/i.test(
+        file.originalname
+      );
 
     cb(
       ok
         ? null
-        : new Error("Only Excel files (.xlsx or .xls) are allowed."),
+        : new Error(
+            "Only Excel files (.xlsx or .xls) are allowed."
+          ),
       ok
     );
   }
 });
+
 
 const imageUpload = multer({
   dest: uploadDir,
+
   limits: {
     fileSize: 5 * 1024 * 1024
   },
+
   fileFilter: (req, file, cb) => {
-    const ok = /\.(jpg|jpeg|png|webp)$/i.test(file.originalname);
+    const ok =
+      /\.(jpg|jpeg|png|webp)$/i.test(
+        file.originalname
+      );
 
     cb(
       ok
         ? null
-        : new Error("Only JPG, PNG or WebP images are allowed."),
+        : new Error(
+            "Only JPG, PNG or WebP images are allowed."
+          ),
       ok
     );
   }
 });
 
+
 app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+app.use(
+  express.urlencoded({
+    extended: true
+  })
+);
 
 
 /* =========================================================
-   ADMIN LOGIN COOKIE
+   COOKIE HELPERS
 ========================================================= */
 
-const ADMIN_COOKIE = "scpa_admin";
+const ADMIN_COOKIE =
+  "scpa_admin";
+
+const ROSTER_COOKIE =
+  "scpa_roster_member";
+
 
 function parseCookies(req) {
   const cookies = {};
-  const header = req.headers.cookie;
 
-  if (!header) return cookies;
+  const header =
+    req.headers.cookie;
 
-  header.split(";").forEach(cookie => {
-    const parts = cookie.trim().split("=");
-    const name = parts.shift();
-    const value = parts.join("=");
+  if (!header) {
+    return cookies;
+  }
 
-    cookies[name] = decodeURIComponent(value);
-  });
+  header
+    .split(";")
+    .forEach(cookie => {
+
+      const parts =
+        cookie.trim().split("=");
+
+      const name =
+        parts.shift();
+
+      const value =
+        parts.join("=");
+
+      cookies[name] =
+        decodeURIComponent(value);
+    });
 
   return cookies;
 }
 
-function createAdminToken() {
+
+/* =========================================================
+   SIGNED TOKEN HELPERS
+========================================================= */
+
+function createSignedToken(
+  purpose,
+  lifetimeMilliseconds
+) {
+
   const expires =
-    Date.now() + (7 * 24 * 60 * 60 * 1000);
+    Date.now() + lifetimeMilliseconds;
 
-  const payload = String(expires);
+  const payload =
+    `${purpose}:${expires}`;
 
-  const signature = crypto
-    .createHmac("sha256", SESSION_SECRET)
-    .update(payload)
-    .digest("hex");
+  const signature =
+    crypto
+      .createHmac(
+        "sha256",
+        SESSION_SECRET
+      )
+      .update(payload)
+      .digest("hex");
 
-  return `${payload}.${signature}`;
+  return `${expires}.${signature}`;
 }
 
-function validAdminToken(token) {
-  if (!token) return false;
 
-  const parts = token.split(".");
+function validSignedToken(
+  token,
+  purpose
+) {
 
-  if (parts.length !== 2) return false;
-
-  const [expires, signature] = parts;
-
-  if (Number(expires) < Date.now()) {
+  if (!token) {
     return false;
   }
 
-  const expected = crypto
-    .createHmac("sha256", SESSION_SECRET)
-    .update(expires)
-    .digest("hex");
+  const parts =
+    token.split(".");
+
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const [
+    expires,
+    signature
+  ] = parts;
+
+
+  if (
+    !expires ||
+    !signature
+  ) {
+    return false;
+  }
+
+
+  if (
+    Number(expires) < Date.now()
+  ) {
+    return false;
+  }
+
+
+  const payload =
+    `${purpose}:${expires}`;
+
+
+  const expected =
+    crypto
+      .createHmac(
+        "sha256",
+        SESSION_SECRET
+      )
+      .update(payload)
+      .digest("hex");
+
 
   try {
+
+    const actualBuffer =
+      Buffer.from(
+        signature,
+        "utf8"
+      );
+
+    const expectedBuffer =
+      Buffer.from(
+        expected,
+        "utf8"
+      );
+
+
+    if (
+      actualBuffer.length !==
+      expectedBuffer.length
+    ) {
+      return false;
+    }
+
+
     return crypto.timingSafeEqual(
-      Buffer.from(signature),
-      Buffer.from(expected)
+      actualBuffer,
+      expectedBuffer
     );
+
   } catch {
     return false;
   }
 }
 
-function isAdmin(req) {
-  const cookies = parseCookies(req);
-  return validAdminToken(cookies[ADMIN_COOKIE]);
+
+/* =========================================================
+   ADMIN AUTHENTICATION
+========================================================= */
+
+function createAdminToken() {
+
+  return createSignedToken(
+    "admin",
+    7 * 24 * 60 * 60 * 1000
+  );
 }
 
-function admin(req, res, next) {
+
+function isAdmin(req) {
+
+  const cookies =
+    parseCookies(req);
+
+  return validSignedToken(
+    cookies[ADMIN_COOKIE],
+    "admin"
+  );
+}
+
+
+function admin(
+  req,
+  res,
+  next
+) {
+
   if (!isAdmin(req)) {
-    return res.status(401).json({
-      error: "Admin login required."
-    });
+
+    return res
+      .status(401)
+      .json({
+        error:
+          "Admin login required."
+      });
   }
 
   next();
@@ -171,382 +349,798 @@ function admin(req, res, next) {
    ADMIN LOGIN / LOGOUT
 ========================================================= */
 
-app.post("/api/admin/login", (req, res) => {
-  const supplied = req.body.password;
+app.post(
+  "/api/admin/login",
+  (req, res) => {
 
-  if (supplied !== ADMIN_PASSWORD) {
-    return res.status(401).json({
-      error: "Incorrect admin password."
+    const supplied =
+      req.body.password;
+
+
+    if (
+      supplied !==
+      ADMIN_PASSWORD
+    ) {
+
+      return res
+        .status(401)
+        .json({
+          error:
+            "Incorrect admin password."
+        });
+    }
+
+
+    const token =
+      createAdminToken();
+
+
+    res.setHeader(
+      "Set-Cookie",
+      `${ADMIN_COOKIE}=${encodeURIComponent(token)}; ` +
+      `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`
+    );
+
+
+    res.json({
+      ok: true
     });
   }
+);
 
-  const token = createAdminToken();
 
-  res.setHeader(
-    "Set-Cookie",
-    `${ADMIN_COOKIE}=${encodeURIComponent(token)}; ` +
-    `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`
+app.post(
+  "/api/admin/logout",
+  (req, res) => {
+
+    res.setHeader(
+      "Set-Cookie",
+      `${ADMIN_COOKIE}=; ` +
+      `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
+    );
+
+
+    res.json({
+      ok: true
+    });
+  }
+);
+
+
+app.get(
+  "/api/admin/status",
+  (req, res) => {
+
+    res.json({
+      authenticated:
+        isAdmin(req)
+    });
+  }
+);
+
+
+/* =========================================================
+   MEMBER ROSTER AUTHENTICATION
+========================================================= */
+
+function createRosterToken() {
+
+  /*
+    Member roster login remains valid
+    for 30 days on that browser.
+  */
+
+  return createSignedToken(
+    "roster",
+    30 * 24 * 60 * 60 * 1000
   );
+}
 
-  res.json({ ok: true });
-});
 
-app.post("/api/admin/logout", (req, res) => {
-  res.setHeader(
-    "Set-Cookie",
-    `${ADMIN_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
+function isRosterMember(req) {
+
+  const cookies =
+    parseCookies(req);
+
+  return validSignedToken(
+    cookies[ROSTER_COOKIE],
+    "roster"
   );
+}
 
-  res.json({ ok: true });
-});
 
-app.get("/api/admin/status", (req, res) => {
-  res.json({
-    authenticated: isAdmin(req)
-  });
-});
+function rosterAccess(
+  req,
+  res,
+  next
+) {
+
+  /*
+    Admin users can also see the roster
+    without entering the member password.
+  */
+
+  if (
+    isAdmin(req) ||
+    isRosterMember(req)
+  ) {
+
+    return next();
+  }
+
+
+  return res
+    .status(401)
+    .json({
+      error:
+        "Member roster login required."
+    });
+}
+
+
+/* =========================================================
+   MEMBER ROSTER LOGIN
+========================================================= */
+
+app.post(
+  "/api/roster/login",
+  (req, res) => {
+
+    const supplied =
+      req.body.password;
+
+
+    if (
+      supplied !==
+      ROSTER_PASSWORD
+    ) {
+
+      return res
+        .status(401)
+        .json({
+          error:
+            "Incorrect member password."
+        });
+    }
+
+
+    const token =
+      createRosterToken();
+
+
+    res.setHeader(
+      "Set-Cookie",
+      `${ROSTER_COOKIE}=${encodeURIComponent(token)}; ` +
+      `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=2592000`
+    );
+
+
+    res.json({
+      ok: true
+    });
+  }
+);
+
+
+/* =========================================================
+   MEMBER ROSTER LOGOUT
+========================================================= */
+
+app.post(
+  "/api/roster/logout",
+  (req, res) => {
+
+    res.setHeader(
+      "Set-Cookie",
+      `${ROSTER_COOKIE}=; ` +
+      `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
+    );
+
+
+    res.json({
+      ok: true
+    });
+  }
+);
+
+
+/* =========================================================
+   MEMBER ROSTER STATUS
+========================================================= */
+
+app.get(
+  "/api/roster/status",
+  (req, res) => {
+
+    res.json({
+      authenticated:
+        isAdmin(req) ||
+        isRosterMember(req)
+    });
+  }
+);
 
 
 /* =========================================================
    TRAININGS
 ========================================================= */
 
-app.get("/api/trainings", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        id,
+app.get(
+  "/api/trainings",
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(`
+          SELECT
+            id,
+            title,
+            date,
+            type,
+            location,
+            description,
+            created_at
+          FROM trainings
+          ORDER BY date ASC, id DESC
+        `);
+
+
+      res.json(
+        result.rows
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Error loading trainings:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not load training sessions."
+        });
+    }
+  }
+);
+
+
+app.post(
+  "/api/trainings",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const {
         title,
         date,
         type,
         location,
-        description,
-        created_at
-      FROM trainings
-      ORDER BY date ASC, id DESC
-    `);
+        description
+      } = req.body;
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Error loading trainings:", err);
 
-    res.status(500).json({
-      error: "Could not load training sessions."
-    });
-  }
-});
+      if (
+        !title ||
+        !date ||
+        !type
+      ) {
 
-app.post("/api/trainings", admin, async (req, res) => {
-  try {
-    const {
-      title,
-      date,
-      type,
-      location,
-      description
-    } = req.body;
+        return res
+          .status(400)
+          .json({
+            error:
+              "Title, date and type are required."
+          });
+      }
 
-    if (!title || !date || !type) {
-      return res.status(400).json({
-        error: "Title, date and type are required."
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO trainings
+            (
+              title,
+              date,
+              type,
+              location,
+              description
+            )
+          VALUES
+            ($1, $2, $3, $4, $5)
+          RETURNING id
+          `,
+          [
+            title,
+            date,
+            type,
+            location || "",
+            description || ""
+          ]
+        );
+
+
+      res.json({
+        id:
+          result.rows[0].id
       });
-    }
 
-    const result = await pool.query(
-      `
-      INSERT INTO trainings
-        (title, date, type, location, description)
-      VALUES
-        ($1, $2, $3, $4, $5)
-      RETURNING id
-      `,
-      [
+    } catch (err) {
+
+      console.error(
+        "Error creating training:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not save the training session."
+        });
+    }
+  }
+);
+
+
+app.put(
+  "/api/trainings/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const {
         title,
         date,
         type,
-        location || "",
-        description || ""
-      ]
-    );
+        location,
+        description
+      } = req.body;
 
-    res.json({
-      id: result.rows[0].id
-    });
-  } catch (err) {
-    console.error("Error creating training:", err);
 
-    res.status(500).json({
-      error: "Could not save the training session."
-    });
-  }
-});
+      if (
+        !title ||
+        !date ||
+        !type
+      ) {
 
-app.put("/api/trainings/:id", admin, async (req, res) => {
-  try {
-    const {
-      title,
-      date,
-      type,
-      location,
-      description
-    } = req.body;
+        return res
+          .status(400)
+          .json({
+            error:
+              "Title, date and type are required."
+          });
+      }
 
-    if (!title || !date || !type) {
-      return res.status(400).json({
-        error: "Title, date and type are required."
+
+      const result =
+        await pool.query(
+          `
+          UPDATE trainings
+          SET
+            title = $1,
+            date = $2,
+            type = $3,
+            location = $4,
+            description = $5
+          WHERE id = $6
+          RETURNING id
+          `,
+          [
+            title,
+            date,
+            type,
+            location || "",
+            description || "",
+            req.params.id
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Session not found."
+          });
+      }
+
+
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error updating training:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not update the training session."
+        });
     }
+  }
+);
 
-    const result = await pool.query(
-      `
-      UPDATE trainings
-      SET
-        title = $1,
-        date = $2,
-        type = $3,
-        location = $4,
-        description = $5
-      WHERE id = $6
-      RETURNING id
-      `,
-      [
-        title,
-        date,
-        type,
-        location || "",
-        description || "",
-        req.params.id
-      ]
-    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: "Session not found."
+app.delete(
+  "/api/trainings/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      await pool.query(
+        "DELETE FROM trainings WHERE id = $1",
+        [
+          req.params.id
+        ]
+      );
+
+
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error deleting training:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not delete the training session."
+        });
     }
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error updating training:", err);
-
-    res.status(500).json({
-      error: "Could not update the training session."
-    });
   }
-});
-
-app.delete("/api/trainings/:id", admin, async (req, res) => {
-  try {
-    await pool.query(
-      "DELETE FROM trainings WHERE id = $1",
-      [req.params.id]
-    );
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error deleting training:", err);
-
-    res.status(500).json({
-      error: "Could not delete the training session."
-    });
-  }
-});
+);
 
 
 /* =========================================================
    CHAPTER MEETINGS
 ========================================================= */
 
-app.get("/api/meetings", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        id,
+app.get(
+  "/api/meetings",
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(`
+          SELECT
+            id,
+            title,
+            meeting_date,
+            meeting_time,
+            location,
+            description,
+            meeting_link,
+            created_at
+          FROM meetings
+          ORDER BY
+            meeting_date ASC,
+            meeting_time ASC NULLS LAST,
+            id DESC
+        `);
+
+
+      res.json(
+        result.rows
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Error loading meetings:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not load chapter meetings."
+        });
+    }
+  }
+);
+
+
+app.post(
+  "/api/meetings",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const {
         title,
         meeting_date,
         meeting_time,
         location,
         description,
-        meeting_link,
-        created_at
-      FROM meetings
-      ORDER BY meeting_date ASC, meeting_time ASC NULLS LAST, id DESC
-    `);
+        meeting_link
+      } = req.body;
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Error loading meetings:", err);
 
-    res.status(500).json({
-      error: "Could not load chapter meetings."
-    });
-  }
-});
+      if (
+        !title ||
+        !meeting_date
+      ) {
 
-app.post("/api/meetings", admin, async (req, res) => {
-  try {
-    const {
-      title,
-      meeting_date,
-      meeting_time,
-      location,
-      description,
-      meeting_link
-    } = req.body;
+        return res
+          .status(400)
+          .json({
+            error:
+              "Meeting title and date are required."
+          });
+      }
 
-    if (!title || !meeting_date) {
-      return res.status(400).json({
-        error: "Meeting title and date are required."
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO meetings
+            (
+              title,
+              meeting_date,
+              meeting_time,
+              location,
+              description,
+              meeting_link
+            )
+          VALUES
+            ($1, $2, $3, $4, $5, $6)
+          RETURNING id
+          `,
+          [
+            title,
+            meeting_date,
+            meeting_time || null,
+            location || "",
+            description || "",
+            meeting_link || ""
+          ]
+        );
+
+
+      res.json({
+        id:
+          result.rows[0].id
       });
-    }
 
-    const result = await pool.query(
-      `
-      INSERT INTO meetings
-        (
-          title,
-          meeting_date,
-          meeting_time,
-          location,
-          description,
-          meeting_link
-        )
-      VALUES
-        ($1, $2, $3, $4, $5, $6)
-      RETURNING id
-      `,
-      [
+    } catch (err) {
+
+      console.error(
+        "Error creating meeting:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not save the meeting."
+        });
+    }
+  }
+);
+
+
+app.put(
+  "/api/meetings/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const {
         title,
         meeting_date,
-        meeting_time || null,
-        location || "",
-        description || "",
-        meeting_link || ""
-      ]
-    );
+        meeting_time,
+        location,
+        description,
+        meeting_link
+      } = req.body;
 
-    res.json({
-      id: result.rows[0].id
-    });
-  } catch (err) {
-    console.error("Error creating meeting:", err);
 
-    res.status(500).json({
-      error: "Could not save the meeting."
-    });
-  }
-});
+      if (
+        !title ||
+        !meeting_date
+      ) {
 
-app.put("/api/meetings/:id", admin, async (req, res) => {
-  try {
-    const {
-      title,
-      meeting_date,
-      meeting_time,
-      location,
-      description,
-      meeting_link
-    } = req.body;
+        return res
+          .status(400)
+          .json({
+            error:
+              "Meeting title and date are required."
+          });
+      }
 
-    if (!title || !meeting_date) {
-      return res.status(400).json({
-        error: "Meeting title and date are required."
+
+      const result =
+        await pool.query(
+          `
+          UPDATE meetings
+          SET
+            title = $1,
+            meeting_date = $2,
+            meeting_time = $3,
+            location = $4,
+            description = $5,
+            meeting_link = $6
+          WHERE id = $7
+          RETURNING id
+          `,
+          [
+            title,
+            meeting_date,
+            meeting_time || null,
+            location || "",
+            description || "",
+            meeting_link || "",
+            req.params.id
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Meeting not found."
+          });
+      }
+
+
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error updating meeting:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not update the meeting."
+        });
     }
+  }
+);
 
-    const result = await pool.query(
-      `
-      UPDATE meetings
-      SET
-        title = $1,
-        meeting_date = $2,
-        meeting_time = $3,
-        location = $4,
-        description = $5,
-        meeting_link = $6
-      WHERE id = $7
-      RETURNING id
-      `,
-      [
-        title,
-        meeting_date,
-        meeting_time || null,
-        location || "",
-        description || "",
-        meeting_link || "",
-        req.params.id
-      ]
-    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: "Meeting not found."
+app.delete(
+  "/api/meetings/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      await pool.query(
+        "DELETE FROM meetings WHERE id = $1",
+        [
+          req.params.id
+        ]
+      );
+
+
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error deleting meeting:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not delete the meeting."
+        });
     }
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error updating meeting:", err);
-
-    res.status(500).json({
-      error: "Could not update the meeting."
-    });
   }
-});
-
-app.delete("/api/meetings/:id", admin, async (req, res) => {
-  try {
-    await pool.query(
-      "DELETE FROM meetings WHERE id = $1",
-      [req.params.id]
-    );
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error deleting meeting:", err);
-
-    res.status(500).json({
-      error: "Could not delete the meeting."
-    });
-  }
-});
+);
 
 
 /* =========================================================
    BOARD MEMBERS
 ========================================================= */
 
-app.get("/api/board-members", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        id,
-        name,
-        position_title,
-        description,
-        photo_url,
-        display_order,
-        created_at
-      FROM board_members
-      ORDER BY display_order ASC, id ASC
-    `);
+app.get(
+  "/api/board-members",
+  async (req, res) => {
 
-    res.json(result.rows);
-  } catch (err) {
-    console.error("Error loading board members:", err);
+    try {
 
-    res.status(500).json({
-      error: "Could not load board members."
-    });
+      const result =
+        await pool.query(`
+          SELECT
+            id,
+            name,
+            position_title,
+            description,
+            photo_url,
+            display_order,
+            created_at
+          FROM board_members
+          ORDER BY
+            display_order ASC,
+            id ASC
+        `);
+
+
+      res.json(
+        result.rows
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Error loading board members:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not load board members."
+        });
+    }
   }
-});
+);
+
 
 app.post(
   "/api/board-members",
   admin,
   imageUpload.single("photo"),
   async (req, res) => {
+
     try {
+
       const {
         name,
         position_title,
@@ -554,62 +1148,95 @@ app.post(
         display_order
       } = req.body;
 
-      if (!name || !position_title) {
-        return res.status(400).json({
-          error: "Name and position title are required."
-        });
+
+      if (
+        !name ||
+        !position_title
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              "Name and position title are required."
+          });
       }
+
 
       let photoUrl = "";
 
+
       if (req.file) {
-        photoUrl = await uploadBoardPhoto(req.file);
+        photoUrl =
+          await uploadBoardPhoto(
+            req.file
+          );
       }
 
-      const result = await pool.query(
-        `
-        INSERT INTO board_members
-          (
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO board_members
+            (
+              name,
+              position_title,
+              description,
+              photo_url,
+              display_order
+            )
+          VALUES
+            ($1, $2, $3, $4, $5)
+          RETURNING id
+          `,
+          [
             name,
             position_title,
-            description,
-            photo_url,
-            display_order
-          )
-        VALUES
-          ($1, $2, $3, $4, $5)
-        RETURNING id
-        `,
-        [
-          name,
-          position_title,
-          description || "",
-          photoUrl,
-          Number(display_order) || 0
-        ]
-      );
+            description || "",
+            photoUrl,
+            Number(display_order) || 0
+          ]
+        );
+
 
       res.json({
-        id: result.rows[0].id
+        id:
+          result.rows[0].id
       });
-    } catch (err) {
-      console.error("Error creating board member:", err);
 
-      res.status(500).json({
-        error: "Could not save the board member."
-      });
+    } catch (err) {
+
+      console.error(
+        "Error creating board member:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not save the board member."
+        });
+
     } finally {
-      cleanupUploadedFile(req.file);
+
+      cleanupUploadedFile(
+        req.file
+      );
     }
   }
 );
+
 
 app.put(
   "/api/board-members/:id",
   admin,
   imageUpload.single("photo"),
   async (req, res) => {
+
     try {
+
       const {
         name,
         position_title,
@@ -617,40 +1244,71 @@ app.put(
         display_order
       } = req.body;
 
-      if (!name || !position_title) {
-        return res.status(400).json({
-          error: "Name and position title are required."
-        });
+
+      if (
+        !name ||
+        !position_title
+      ) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              "Name and position title are required."
+          });
       }
 
-      const existingResult = await pool.query(
-        `
-        SELECT photo_url
-        FROM board_members
-        WHERE id = $1
-        `,
-        [req.params.id]
-      );
 
-      if (existingResult.rows.length === 0) {
-        return res.status(404).json({
-          error: "Board member not found."
-        });
+      const existingResult =
+        await pool.query(
+          `
+          SELECT photo_url
+          FROM board_members
+          WHERE id = $1
+          `,
+          [
+            req.params.id
+          ]
+        );
+
+
+      if (
+        existingResult.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Board member not found."
+          });
       }
+
 
       let photoUrl =
-        existingResult.rows[0].photo_url || "";
+        existingResult.rows[0]
+          .photo_url || "";
+
 
       if (req.file) {
+
         const newPhotoUrl =
-          await uploadBoardPhoto(req.file);
+          await uploadBoardPhoto(
+            req.file
+          );
+
 
         if (photoUrl) {
-          await deleteBoardPhotoFromStorage(photoUrl);
+          await deleteBoardPhotoFromStorage(
+            photoUrl
+          );
         }
 
-        photoUrl = newPhotoUrl;
+
+        photoUrl =
+          newPhotoUrl;
       }
+
 
       await pool.query(
         `
@@ -673,122 +1331,218 @@ app.put(
         ]
       );
 
-      res.json({ ok: true });
-    } catch (err) {
-      console.error("Error updating board member:", err);
 
-      res.status(500).json({
-        error: "Could not update the board member."
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error updating board member:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not update the board member."
+        });
+
     } finally {
-      cleanupUploadedFile(req.file);
+
+      cleanupUploadedFile(
+        req.file
+      );
     }
   }
 );
 
-app.delete("/api/board-members/:id", admin, async (req, res) => {
-  try {
-    const result = await pool.query(
-      `
-      SELECT photo_url
-      FROM board_members
-      WHERE id = $1
-      `,
-      [req.params.id]
-    );
 
-    if (result.rows.length === 0) {
-      return res.status(404).json({
-        error: "Board member not found."
+app.delete(
+  "/api/board-members/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT photo_url
+          FROM board_members
+          WHERE id = $1
+          `,
+          [
+            req.params.id
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Board member not found."
+          });
+      }
+
+
+      const photoUrl =
+        result.rows[0]
+          .photo_url || "";
+
+
+      await pool.query(
+        "DELETE FROM board_members WHERE id = $1",
+        [
+          req.params.id
+        ]
+      );
+
+
+      if (photoUrl) {
+        await deleteBoardPhotoFromStorage(
+          photoUrl
+        );
+      }
+
+
+      res.json({
+        ok: true
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error deleting board member:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not delete the board member."
+        });
     }
-
-    const photoUrl =
-      result.rows[0].photo_url || "";
-
-    await pool.query(
-      "DELETE FROM board_members WHERE id = $1",
-      [req.params.id]
-    );
-
-    if (photoUrl) {
-      await deleteBoardPhotoFromStorage(photoUrl);
-    }
-
-    res.json({ ok: true });
-  } catch (err) {
-    console.error("Error deleting board member:", err);
-
-    res.status(500).json({
-      error: "Could not delete the board member."
-    });
   }
-});
+);
 
 
 /* =========================================================
    BOARD PHOTO HELPERS
 ========================================================= */
 
-async function uploadBoardPhoto(file) {
+async function uploadBoardPhoto(
+  file
+) {
+
   const extension =
-    path.extname(file.originalname).toLowerCase();
+    path
+      .extname(
+        file.originalname
+      )
+      .toLowerCase();
+
 
   const storageName =
     `${Date.now()}-${crypto.randomUUID()}${extension}`;
 
-  const fileBuffer =
-    fs.readFileSync(file.path);
 
-  const { error } = await supabase
-    .storage
-    .from("board-photos")
-    .upload(
-      storageName,
-      fileBuffer,
-      {
-        contentType: file.mimetype,
-        upsert: false
-      }
+  const fileBuffer =
+    fs.readFileSync(
+      file.path
     );
+
+
+  const {
+    error
+  } =
+    await supabase
+      .storage
+      .from("board-photos")
+      .upload(
+        storageName,
+        fileBuffer,
+        {
+          contentType:
+            file.mimetype,
+
+          upsert:
+            false
+        }
+      );
+
 
   if (error) {
     throw error;
   }
 
-  const { data } = supabase
-    .storage
-    .from("board-photos")
-    .getPublicUrl(storageName);
+
+  const {
+    data
+  } =
+    supabase
+      .storage
+      .from("board-photos")
+      .getPublicUrl(
+        storageName
+      );
+
 
   return data.publicUrl;
 }
 
-async function deleteBoardPhotoFromStorage(photoUrl) {
+
+async function deleteBoardPhotoFromStorage(
+  photoUrl
+) {
+
   try {
+
     const marker =
       "/storage/v1/object/public/board-photos/";
 
-    const markerIndex =
-      photoUrl.indexOf(marker);
 
-    if (markerIndex === -1) {
+    const markerIndex =
+      photoUrl.indexOf(
+        marker
+      );
+
+
+    if (
+      markerIndex === -1
+    ) {
       return;
     }
+
 
     const storagePath =
       decodeURIComponent(
         photoUrl.substring(
-          markerIndex + marker.length
+          markerIndex +
+          marker.length
         )
       );
+
 
     await supabase
       .storage
       .from("board-photos")
-      .remove([storagePath]);
+      .remove([
+        storagePath
+      ]);
 
   } catch (err) {
+
     console.error(
       "Could not remove old board photo:",
       err
@@ -796,57 +1550,96 @@ async function deleteBoardPhotoFromStorage(photoUrl) {
   }
 }
 
-function cleanupUploadedFile(file) {
+
+function cleanupUploadedFile(
+  file
+) {
+
   try {
+
     if (
       file &&
       file.path &&
-      fs.existsSync(file.path)
+      fs.existsSync(
+        file.path
+      )
     ) {
-      fs.unlinkSync(file.path);
+
+      fs.unlinkSync(
+        file.path
+      );
     }
+
   } catch {}
 }
 
 
 /* =========================================================
-   PUBLIC ROSTER
+   PROTECTED MEMBER ROSTER
 ========================================================= */
 
-app.get("/api/roster", async (req, res) => {
-  try {
-    const result = await pool.query(`
-      SELECT
-        filename,
-        uploaded_at,
-        rows_json
-      FROM roster
-      WHERE id = 1
-    `);
+app.get(
+  "/api/roster",
+  rosterAccess,
+  async (req, res) => {
 
-    if (result.rows.length === 0) {
-      return res.json({
-        filename: null,
-        uploaded_at: null,
-        rows: []
+    try {
+
+      const result =
+        await pool.query(`
+          SELECT
+            filename,
+            uploaded_at,
+            rows_json
+          FROM roster
+          WHERE id = 1
+        `);
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res.json({
+          filename: null,
+          uploaded_at: null,
+          rows: []
+        });
+      }
+
+
+      const row =
+        result.rows[0];
+
+
+      res.json({
+        filename:
+          row.filename,
+
+        uploaded_at:
+          row.uploaded_at,
+
+        rows:
+          row.rows_json || []
       });
+
+    } catch (err) {
+
+      console.error(
+        "Error loading roster:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not load the roster."
+        });
     }
-
-    const row = result.rows[0];
-
-    res.json({
-      filename: row.filename,
-      uploaded_at: row.uploaded_at,
-      rows: row.rows_json || []
-    });
-  } catch (err) {
-    console.error("Error loading roster:", err);
-
-    res.status(500).json({
-      error: "Could not load the roster."
-    });
   }
-});
+);
 
 
 /* =========================================================
@@ -860,63 +1653,172 @@ app.post(
   async (req, res) => {
 
     if (!req.file) {
-      return res.status(400).json({
-        error: "Please select an Excel file."
-      });
+
+      return res
+        .status(400)
+        .json({
+          error:
+            "Please select an Excel file."
+        });
     }
 
+
     try {
+
       const workbook =
-        XLSX.readFile(req.file.path);
+        XLSX.readFile(
+          req.file.path
+        );
+
 
       const sheetName =
         workbook.SheetNames[0];
 
-      const sheet =
-        workbook.Sheets[sheetName];
 
-      const rows =
+      const sheet =
+        workbook.Sheets[
+          sheetName
+        ];
+
+
+      /*
+        Read worksheet as arrays instead
+        of relying on Excel header names.
+
+        Excel column indexes:
+        B  = 1
+        C  = 2
+        F  = 5
+        O  = 14
+        AA = 26
+      */
+
+      const rawRows =
         XLSX.utils.sheet_to_json(
           sheet,
           {
-            defval: ""
+            header: 1,
+            defval: "",
+            raw: false
           }
         );
+
+
+      /*
+        Skip the first row because it
+        contains Excel headings.
+      */
+
+      const dataRows =
+        rawRows.slice(1);
+
+
+      const publicRows =
+        dataRows
+          .map(row => ({
+
+            "Last Name":
+              String(
+                row[1] ?? ""
+              ).trim(),
+
+            "First Name":
+              String(
+                row[2] ?? ""
+              ).trim(),
+
+            "Referee Certification":
+              String(
+                row[5] ?? ""
+              ).trim(),
+
+            "Membership Type":
+              String(
+                row[14] ?? ""
+              ).trim(),
+
+            "Email Address":
+              String(
+                row[26] ?? ""
+              ).trim()
+
+          }))
+          .filter(row =>
+
+            row["Last Name"] ||
+            row["First Name"]
+
+          );
+
 
       await pool.query(
         `
         INSERT INTO roster
-          (id, filename, uploaded_at, rows_json)
+          (
+            id,
+            filename,
+            uploaded_at,
+            rows_json
+          )
         VALUES
-          (1, $1, NOW(), $2::jsonb)
+          (
+            1,
+            $1,
+            NOW(),
+            $2::jsonb
+          )
 
         ON CONFLICT (id)
+
         DO UPDATE SET
-          filename = EXCLUDED.filename,
-          uploaded_at = EXCLUDED.uploaded_at,
-          rows_json = EXCLUDED.rows_json
+          filename =
+            EXCLUDED.filename,
+
+          uploaded_at =
+            EXCLUDED.uploaded_at,
+
+          rows_json =
+            EXCLUDED.rows_json
         `,
         [
           req.file.originalname,
-          JSON.stringify(rows)
+          JSON.stringify(
+            publicRows
+          )
         ]
       );
 
-      fs.unlinkSync(req.file.path);
+
+      cleanupUploadedFile(
+        req.file
+      );
+
 
       res.json({
         ok: true,
-        count: rows.length
+        count:
+          publicRows.length
       });
 
     } catch (err) {
-      console.error("Error processing roster:", err);
 
-      cleanupUploadedFile(req.file);
+      console.error(
+        "Error processing roster:",
+        err
+      );
 
-      res.status(400).json({
-        error: "Could not read that Excel file."
-      });
+
+      cleanupUploadedFile(
+        req.file
+      );
+
+
+      res
+        .status(400)
+        .json({
+          error:
+            "Could not read that Excel file."
+        });
     }
   }
 );
@@ -926,15 +1828,19 @@ app.post(
    ADMIN PAGE
 ========================================================= */
 
-app.get("/admin", (req, res) => {
-  res.sendFile(
-    path.join(
-      __dirname,
-      "public",
-      "admin.html"
-    )
-  );
-});
+app.get(
+  "/admin",
+  (req, res) => {
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "admin.html"
+      )
+    );
+  }
+);
 
 
 /* =========================================================
@@ -943,7 +1849,10 @@ app.get("/admin", (req, res) => {
 
 app.use(
   express.static(
-    path.join(__dirname, "public")
+    path.join(
+      __dirname,
+      "public"
+    )
   )
 );
 
@@ -952,19 +1861,31 @@ app.use(
    PUBLIC WEBSITE
 ========================================================= */
 
-app.get("*", (req, res) => {
-  res.sendFile(
-    path.join(
-      __dirname,
-      "public",
-      "index.html"
-    )
-  );
-});
+app.get(
+  "*",
+  (req, res) => {
+
+    res.sendFile(
+      path.join(
+        __dirname,
+        "public",
+        "index.html"
+      )
+    );
+  }
+);
 
 
-app.listen(PORT, () => {
-  console.log(
-    `SCPA Volleyball Officials site running on port ${PORT}`
-  );
-});
+/* =========================================================
+   START SERVER
+========================================================= */
+
+app.listen(
+  PORT,
+  () => {
+
+    console.log(
+      `SCPA Volleyball Officials site running on port ${PORT}`
+    );
+  }
+);
