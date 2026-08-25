@@ -815,27 +815,20 @@
 
       <!-- OFFICIALS ROSTER -->
 
-      <div class="member-roster-toggle-wrap">
-
-  <button
-    type="button"
-    class="member-roster-toggle"
-    id="member-roster-toggle"
-    aria-expanded="false"
-    aria-controls="member-roster"
-  >
-    <span>Show Officials Roster</span>
-    <span class="member-roster-toggle-arrow">▼</span>
-  </button>
-
-</div>
-
-
-<div
+     <div
   id="member-roster"
   class="member-roster-section"
   style="display:none;"
 >
+       <div class="member-section-actions">
+  <button
+    type="button"
+    class="btn secondary"
+    id="close-roster-section"
+  >
+    Close Roster
+  </button>
+</div>
 
         <div class="member-roster-heading">
 
@@ -957,20 +950,7 @@
            MEMBER DOCUMENTS
       ================================================== -->
 
-      <div class="member-documents-toggle-wrap">
-
-        <button
-          type="button"
-          class="member-roster-toggle"
-          id="member-documents-toggle"
-          aria-expanded="false"
-          aria-controls="member-documents"
-        >
-          <span>Show Chapter Documents</span>
-          <span class="member-documents-toggle-arrow">▼</span>
-        </button>
-
-      </div>
+     
 
 
       <div
@@ -978,7 +958,16 @@
         class="member-documents-section"
         style="display:none;"
       >
-
+<div class="member-section-actions">
+  <button
+    type="button"
+    class="btn secondary"
+    id="close-documents-section"
+  >
+    Close Documents
+  </button>
+</div>
+        
         <div class="member-roster-heading">
 
           <div>
