@@ -1714,41 +1714,51 @@ app.post(
 
 
       const publicRows =
-        dataRows
-          .map(row => ({
+  dataRows
+    .map(row => ({
 
-            "Last Name":
-              String(
-                row[1] ?? ""
-              ).trim(),
+      "Last Name":
+        String(
+          row[1] ?? ""
+        ).trim(),
 
-            "First Name":
-              String(
-                row[2] ?? ""
-              ).trim(),
+      "First Name":
+        String(
+          row[2] ?? ""
+        ).trim(),
 
-            "Referee Certification":
-              String(
-                row[5] ?? ""
-              ).trim(),
+      "Referee Certification":
+        String(
+          row[5] ?? ""
+        ).trim(),
 
-            "Membership Type":
-              String(
-                row[14] ?? ""
-              ).trim(),
+      "LJ Certification":
+        String(
+          row[8] ?? ""
+        ).trim(),
 
-            "Email Address":
-              String(
-                row[26] ?? ""
-              ).trim()
+      "Scorer Certification":
+        String(
+          row[11] ?? ""
+        ).trim(),
 
-          }))
-          .filter(row =>
+      "Membership Type":
+        String(
+          row[14] ?? ""
+        ).trim(),
 
-            row["Last Name"] ||
-            row["First Name"]
+      "Email Address":
+        String(
+          row[26] ?? ""
+        ).trim()
 
-          );
+    }))
+    .filter(row =>
+
+      row["Last Name"] ||
+      row["First Name"]
+
+    );
 
 
       await pool.query(
