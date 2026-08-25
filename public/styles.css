@@ -1398,3 +1398,143 @@ footer{
   }
 
 }
+/* =========================================================
+   MEMBERS AREA
+========================================================= */
+
+.members-welcome{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-start;
+  gap:30px;
+  padding:24px 26px;
+  margin-bottom:24px;
+  background:var(--navy);
+  color:#fff;
+  border-radius:14px;
+}
+
+.members-welcome h3{
+  margin:0 0 5px;
+  font-size:24px;
+}
+
+.members-welcome p:not(.eyebrow){
+  margin:0;
+  color:#dbe4ee;
+  max-width:650px;
+}
+
+.members-welcome .roster-logout-btn{
+  flex-shrink:0;
+  background:transparent !important;
+  color:#fff !important;
+  border:1px solid rgba(255,255,255,.35) !important;
+}
+
+
+/* Resource cards */
+
+.member-resource-grid{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:16px;
+  margin-bottom:48px;
+}
+
+.member-resource-card{
+  display:block;
+  padding:20px;
+  background:#fff;
+  border:1px solid var(--line);
+  border-radius:14px;
+  color:var(--text);
+  text-decoration:none;
+  box-shadow:0 6px 20px rgba(16,35,63,.05);
+  transition:transform .2s ease,box-shadow .2s ease;
+}
+
+a.member-resource-card:hover{
+  transform:translateY(-3px);
+  box-shadow:0 12px 28px rgba(16,35,63,.11);
+}
+
+.member-resource-icon{
+  font-size:26px;
+  margin-bottom:10px;
+}
+
+.member-resource-card h3{
+  margin:0 0 6px;
+  color:var(--navy);
+  font-size:17px;
+}
+
+.member-resource-card p{
+  margin:0 0 12px;
+  color:var(--muted);
+  font-size:12px;
+  line-height:1.5;
+}
+
+.member-resource-card span{
+  color:#98721e;
+  font-size:12px;
+  font-weight:800;
+}
+
+.member-resource-card.coming-soon{
+  background:#fafafa;
+}
+
+
+/* Roster inside Members Area */
+
+.member-roster-section{
+  padding-top:10px;
+}
+
+.member-roster-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:flex-end;
+  gap:20px;
+  margin-bottom:20px;
+}
+
+.member-roster-heading h3{
+  margin:0;
+  color:var(--navy);
+  font-size:28px;
+}
+
+
+/* Responsive */
+
+@media(max-width:950px){
+
+  .member-resource-grid{
+    grid-template-columns:repeat(2,1fr);
+  }
+
+}
+
+@media(max-width:650px){
+
+  .members-welcome{
+    flex-direction:column;
+  }
+
+  .member-resource-grid{
+    grid-template-columns:1fr;
+  }
+
+  .member-roster-heading{
+    display:block;
+  }
+
+  #roster-meta{
+    margin-top:5px;
+  }
+
+}
