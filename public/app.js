@@ -912,6 +912,91 @@ function escapeAttribute(value) {
   return escapeHtml(value);
 }
 
+/* =========================================================
+   MOBILE NAVIGATION
+========================================================= */
+
+const mobileMenuButton =
+  document.getElementById("mobile-menu-button");
+
+const mobileMenu =
+  document.getElementById("mobile-menu");
+
+
+if (mobileMenuButton && mobileMenu) {
+
+  mobileMenuButton.addEventListener(
+    "click",
+    () => {
+
+      const isOpen =
+        mobileMenu.classList.toggle("open");
+
+      mobileMenuButton.classList.toggle(
+        "open",
+        isOpen
+      );
+
+      mobileMenuButton.setAttribute(
+        "aria-expanded",
+        String(isOpen)
+      );
+
+    }
+  );
+
+
+  /* Close menu after selecting a page section */
+
+  mobileMenu
+    .querySelectorAll("a")
+    .forEach(link => {
+
+      link.addEventListener(
+        "click",
+        () => {
+
+          mobileMenu.classList.remove("open");
+
+          mobileMenuButton.classList.remove("open");
+
+          mobileMenuButton.setAttribute(
+            "aria-expanded",
+            "false"
+          );
+
+        }
+      );
+
+    });
+
+
+  /* Close menu with Escape key */
+
+  document.addEventListener(
+    "keydown",
+    event => {
+
+      if (
+        event.key === "Escape" &&
+        mobileMenu.classList.contains("open")
+      ) {
+
+        mobileMenu.classList.remove("open");
+
+        mobileMenuButton.classList.remove("open");
+
+        mobileMenuButton.setAttribute(
+          "aria-expanded",
+          "false"
+        );
+
+      }
+
+    }
+  );
+
+}
 
 /* =========================================================
    START
