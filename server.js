@@ -1956,7 +1956,497 @@ app.post(
   }
 );
 
+/* =========================================================
+   MEMBER DOCUMENTS
+========================================================= */
 
+
+/* ---------------------------------------------------------
+   MEMBER: LIST DOCUMENTS
+--------------------------------------------------------- */
+
+app.get(
+  "/api/documents",
+  rosterAccess,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(`
+          SELECT
+            id,
+            title,
+            category,
+            description,
+            filename,
+            display_order,
+            created_at
+          FROM documents
+          ORDER BY
+            category ASC,
+            display_order ASC,
+            title ASC
+        `);
+
+
+      res.json(
+        result.rows
+      );
+
+    } catch (err) {
+
+      console.error(
+        "Error loading documents:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not load member documents."
+        });
+    }
+  }
+);
+
+
+/* ---------------------------------------------------------
+   MEMBER: GET TEMPORARY DOWNLOAD LINK
+--------------------------------------------------------- */
+
+app.get(
+  "/api/documents/:id/download",
+  rosterAccess,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+            storage_path
+          FROM documents
+          WHERE id = $1
+          `,
+          [
+            req.params.id
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Document not found."
+          });
+      }
+
+
+      const signedUrl =
+        await createDocumentDownloadUrl(
+          result.rows[0].storage_path
+        );
+
+
+      res.json({
+        url:
+          signedUrl
+      });
+
+    } catch (err) {
+
+      console.error(
+        "Error creating document download:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not create the document download."
+        });
+    }
+  }
+);
+
+
+/* ---------------------------------------------------------
+   ADMIN: CREATE DOCUMENT
+--------------------------------------------------------- */
+
+app.post(
+  "/api/documents",
+  admin,
+  documentUpload.single("file"),
+  async (req, res) => {
+
+    if (!req.file) {
+
+      return res
+        .status(400)
+        .json({
+          error:
+            "Please select a document."
+        });
+    }
+
+
+    let storagePath = "";
+
+
+    try {
+
+      const {
+        title,
+        category,
+        description,
+        display_order
+      } = req.body;
+
+
+      if (!title) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              "Document title is required."
+          });
+      }
+
+
+      storagePath =
+        await uploadMemberDocument(
+          req.file
+        );
+
+
+      const result =
+        await pool.query(
+          `
+          INSERT INTO documents
+            (
+              title,
+              category,
+              description,
+              filename,
+              file_url,
+              storage_path,
+              display_order
+            )
+          VALUES
+            (
+              $1,
+              $2,
+              $3,
+              $4,
+              '',
+              $5,
+              $6
+            )
+          RETURNING id
+          `,
+          [
+            title,
+            category ||
+              "Chapter Documents",
+
+            description || "",
+
+            req.file.originalname,
+
+            storagePath,
+
+            Number(
+              display_order
+            ) || 0
+          ]
+        );
+
+
+      res.json({
+        ok: true,
+        id:
+          result.rows[0].id
+      });
+
+    } catch (err) {
+
+      console.error(
+        "Error creating document:",
+        err
+      );
+
+
+      /*
+        If Storage succeeded but the database
+        insert failed, remove the orphaned file.
+      */
+
+      if (storagePath) {
+        await deleteMemberDocumentFromStorage(
+          storagePath
+        );
+      }
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not save the document."
+        });
+
+    } finally {
+
+      cleanupUploadedFile(
+        req.file
+      );
+    }
+  }
+);
+
+
+/* ---------------------------------------------------------
+   ADMIN: UPDATE DOCUMENT DETAILS / OPTIONAL FILE
+--------------------------------------------------------- */
+
+app.put(
+  "/api/documents/:id",
+  admin,
+  documentUpload.single("file"),
+  async (req, res) => {
+
+    try {
+
+      const {
+        title,
+        category,
+        description,
+        display_order
+      } = req.body;
+
+
+      if (!title) {
+
+        return res
+          .status(400)
+          .json({
+            error:
+              "Document title is required."
+          });
+      }
+
+
+      const existing =
+        await pool.query(
+          `
+          SELECT
+            filename,
+            storage_path
+          FROM documents
+          WHERE id = $1
+          `,
+          [
+            req.params.id
+          ]
+        );
+
+
+      if (
+        existing.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Document not found."
+          });
+      }
+
+
+      let filename =
+        existing.rows[0].filename;
+
+      let storagePath =
+        existing.rows[0].storage_path;
+
+
+      if (req.file) {
+
+        const newStoragePath =
+          await uploadMemberDocument(
+            req.file
+          );
+
+
+        await deleteMemberDocumentFromStorage(
+          storagePath
+        );
+
+
+        storagePath =
+          newStoragePath;
+
+        filename =
+          req.file.originalname;
+      }
+
+
+      await pool.query(
+        `
+        UPDATE documents
+        SET
+          title = $1,
+          category = $2,
+          description = $3,
+          filename = $4,
+          storage_path = $5,
+          display_order = $6
+        WHERE id = $7
+        `,
+        [
+          title,
+
+          category ||
+            "Chapter Documents",
+
+          description || "",
+
+          filename,
+
+          storagePath,
+
+          Number(
+            display_order
+          ) || 0,
+
+          req.params.id
+        ]
+      );
+
+
+      res.json({
+        ok: true
+      });
+
+    } catch (err) {
+
+      console.error(
+        "Error updating document:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not update the document."
+        });
+
+    } finally {
+
+      cleanupUploadedFile(
+        req.file
+      );
+    }
+  }
+);
+
+
+/* ---------------------------------------------------------
+   ADMIN: DELETE DOCUMENT
+--------------------------------------------------------- */
+
+app.delete(
+  "/api/documents/:id",
+  admin,
+  async (req, res) => {
+
+    try {
+
+      const result =
+        await pool.query(
+          `
+          SELECT
+            storage_path
+          FROM documents
+          WHERE id = $1
+          `,
+          [
+            req.params.id
+          ]
+        );
+
+
+      if (
+        result.rows.length === 0
+      ) {
+
+        return res
+          .status(404)
+          .json({
+            error:
+              "Document not found."
+          });
+      }
+
+
+      const storagePath =
+        result.rows[0]
+          .storage_path;
+
+
+      await pool.query(
+        `
+        DELETE FROM documents
+        WHERE id = $1
+        `,
+        [
+          req.params.id
+        ]
+      );
+
+
+      await deleteMemberDocumentFromStorage(
+        storagePath
+      );
+
+
+      res.json({
+        ok: true
+      });
+
+    } catch (err) {
+
+      console.error(
+        "Error deleting document:",
+        err
+      );
+
+
+      res
+        .status(500)
+        .json({
+          error:
+            "Could not delete the document."
+        });
+    }
+  }
+);
 /* =========================================================
    ADMIN PAGE
 ========================================================= */
