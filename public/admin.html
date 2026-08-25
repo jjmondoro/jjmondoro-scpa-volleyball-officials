@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Portal | South Central PA Volleyball Officials</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+
+<body>
+
+<header class="site-header">
+  <div class="container nav">
+    <div class="brand">
+      <div class="brand-mark">SC</div>
+      <div>
+        <strong>South Central PA</strong>
+        <span>Chapter of Volleyball Officials</span>
+      </div>
+    </div>
+
+    <nav>
+      <a href="/">Public Site</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<section class="section admin-section">
+
+  <div class="container">
+
+    <div id="admin-login-panel" class="admin-login-wrap">
+
+      <form id="admin-login-form" class="admin-card admin-login-card">
+
+        <p class="eyebrow">Chapter Administration</p>
+
+        <h2>Admin Login</h2>
+
+        <p class="muted">
+          Enter the chapter administrator password to continue.
+        </p>
+
+        <label>
+          Admin Password
+          <input
+            type="password"
+            id="admin-login-password"
+            required
+            autocomplete="current-password"
+          >
+        </label>
+
+        <button class="btn primary" type="submit">
+          Log In
+        </button>
+
+        <div
+          class="form-message"
+          id="admin-login-message"
+        ></div>
+
+      </form>
+
+    </div>
+
+
+    <div id="admin-portal" style="display:none;">
+
+      <div class="admin-portal-heading">
+
+        <div>
+          <p class="eyebrow">Chapter Administration</p>
+          <h2>Admin Portal</h2>
+          <p class="muted">
+            Manage training sessions, rating sessions and the chapter roster.
+          </p>
+        </div>
+
+        <button
+          class="btn secondary"
+          type="button"
+          id="admin-logout"
+        >
+          Log Out
+        </button>
+
+      </div>
+
+
+      <div class="admin-grid">
+
+        <form id="training-form" class="admin-card">
+
+          <h3 id="training-form-title">
+            Add Training / Rating Session
+          </h3>
+
+          <input
+            type="hidden"
+            id="training-id"
+          >
+
+          <label>
+            Title
+            <input
+              name="title"
+              id="training-title"
+              placeholder="NCAA Rules Training"
+              required
+            >
+          </label>
+
+          <label>
+            Date
+            <input
+              type="date"
+              name="date"
+              id="training-date"
+              required
+            >
+          </label>
+
+          <label>
+            Type
+            <select
+              name="type"
+              id="training-type"
+            >
+              <option>Training</option>
+              <option>Rating Session</option>
+              <option>Meeting</option>
+              <option>Clinic</option>
+            </select>
+          </label>
+
+          <label>
+            Location
+            <input
+              name="location"
+              id="training-location"
+              placeholder="Location / Online"
+            >
+          </label>
+
+          <label>
+            Description
+            <textarea
+              name="description"
+              id="training-description"
+              rows="4"
+              placeholder="Details for chapter officials"
+            ></textarea>
+          </label>
+
+          <div class="admin-form-actions">
+
+            <button
+              class="btn primary"
+              id="training-submit"
+              type="submit"
+            >
+              Publish Session
+            </button>
+
+            <button
+              class="btn secondary"
+              id="training-cancel"
+              type="button"
+              style="display:none;"
+            >
+              Cancel Edit
+            </button>
+
+          </div>
+
+          <div
+            class="form-message"
+            id="training-message"
+          ></div>
+
+        </form>
+
+
+        <form id="roster-form" class="admin-card">
+
+          <h3>Upload Chapter Roster</h3>
+
+          <label>
+            Excel File (.xlsx or .xls)
+            <input
+              type="file"
+              name="file"
+              accept=".xlsx,.xls"
+              required
+            >
+          </label>
+
+          <p class="small">
+            The first worksheet is used. Column headings from Excel
+            become the public roster table headings.
+          </p>
+
+          <button
+            class="btn primary"
+            type="submit"
+          >
+            Upload Roster
+          </button>
+
+          <div
+            class="form-message"
+            id="roster-message"
+          ></div>
+
+        </form>
+
+      </div>
+
+
+      <div class="admin-card manage-sessions-card">
+
+        <div class="manage-sessions-heading">
+
+          <div>
+            <p class="eyebrow">Session Management</p>
+            <h3>Manage Training & Rating Sessions</h3>
+          </div>
+
+          <button
+            class="btn secondary"
+            type="button"
+            id="refresh-admin-sessions"
+          >
+            Refresh
+          </button>
+
+        </div>
+
+        <div id="admin-session-list">
+          <div class="loading">
+            Loading sessions...
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+  </div>
+
+</section>
+
+</main>
+
+<script src="/admin.js"></script>
+
+</body>
+</html>
