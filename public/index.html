@@ -588,11 +588,11 @@
 
 
 <!-- ======================================================
-     MEMBER ROSTER
+     MEMBERS AREA
 ====================================================== -->
 
 <section
-  id="roster"
+  id="members"
   class="section"
 >
 
@@ -601,22 +601,21 @@
     <div class="section-heading">
 
       <div>
-
         <p class="eyebrow">
-          Chapter Directory
+          Member Resources
         </p>
 
         <h2>
-          Officials Roster
+          Members Area
         </h2>
-
       </div>
 
-
-      <div id="roster-meta"></div>
+      <p>
+        Private resources and information for
+        South Central PA Chapter officials.
+      </p>
 
     </div>
-
 
 
     <!-- MEMBER LOGIN -->
@@ -628,24 +627,22 @@
 
       <div class="roster-login-card">
 
-        <h3>
-          Member Roster Access
-        </h3>
-
-
-        <p>
-
-          This directory is available to South Central PA
-          Chapter members. Enter the member password to view
-          the roster.
-
+        <p class="eyebrow">
+          Member Access
         </p>
 
+        <h3>
+          Chapter Member Login
+        </h3>
+
+        <p>
+          Enter the chapter member password to access
+          the officials roster and member resources.
+        </p>
 
         <form id="roster-login-form">
 
           <label>
-
             Member Password
 
             <input
@@ -654,17 +651,14 @@
               required
               autocomplete="current-password"
             >
-
           </label>
-
 
           <button
             class="btn primary"
             type="submit"
           >
-            View Roster
+            Enter Members Area
           </button>
-
 
           <div
             class="form-message"
@@ -678,144 +672,260 @@
     </div>
 
 
-
-    <!-- ROSTER CONTENT -->
+    <!-- MEMBERS CONTENT -->
 
     <div
       id="roster-content"
       style="display:none;"
     >
 
+      <div class="members-welcome">
 
-      <!-- SEARCH / FILTER TOOLBAR -->
+        <div>
 
-      <div class="roster-toolbar">
+          <p class="eyebrow">
+            Member Portal
+          </p>
 
-        <div class="roster-search-wrap">
+          <h3>
+            Welcome to the Members Area
+          </h3>
 
-          <label>
-
-            Search Officials
-
-            <input
-              type="search"
-              id="roster-search"
-              placeholder="Search by name, certification or email..."
-            >
-
-          </label>
-
-        </div>
-
-
-        <div class="roster-filters">
-
-          <label>
-
-            Referee
-
-            <select id="filter-referee">
-
-              <option value="">
-                All
-              </option>
-
-            </select>
-
-          </label>
-
-
-          <label>
-
-            LJ
-
-            <select id="filter-lj">
-
-              <option value="">
-                All
-              </option>
-
-            </select>
-
-          </label>
-
-
-          <label>
-
-            Scorer
-
-            <select id="filter-scorer">
-
-              <option value="">
-                All
-              </option>
-
-            </select>
-
-          </label>
-
-
-          <label>
-
-            Membership
-
-            <select id="filter-membership">
-
-              <option value="">
-                All
-              </option>
-
-            </select>
-
-          </label>
+          <p>
+            Access chapter contact information,
+            documents, training resources and other
+            member-only materials.
+          </p>
 
         </div>
-
-      </div>
-
-
-
-      <!-- RESULTS -->
-
-      <div class="roster-results-bar">
-
-        <span id="roster-results-count"></span>
-
 
         <button
           class="btn secondary roster-logout-btn"
           id="roster-logout"
           type="button"
         >
-          Log Out of Roster
+          Log Out
         </button>
 
       </div>
 
 
+      <!-- MEMBER RESOURCE CARDS -->
 
-      <!-- TABLE -->
+      <div class="member-resource-grid">
 
-      <div class="table-wrap">
+        <a
+          class="member-resource-card"
+          href="#member-roster"
+        >
 
-        <table id="roster-table">
+          <div class="member-resource-icon">
+            👥
+          </div>
 
-          <thead></thead>
+          <h3>
+            Officials Roster
+          </h3>
+
+          <p>
+            Search chapter officials, certifications,
+            membership status and contact information.
+          </p>
+
+          <span>
+            View Roster →
+          </span>
+
+        </a>
 
 
-          <tbody>
+        <div class="member-resource-card coming-soon">
 
-            <tr>
+          <div class="member-resource-icon">
+            📄
+          </div>
 
-              <td class="loading">
-                Loading roster...
-              </td>
+          <h3>
+            Chapter Documents
+          </h3>
 
-            </tr>
+          <p>
+            Meeting minutes, chapter policies,
+            forms and downloadable documents.
+          </p>
 
-          </tbody>
+          <span>
+            Coming Next
+          </span>
 
-        </table>
+        </div>
+
+
+        <div class="member-resource-card coming-soon">
+
+          <div class="member-resource-icon">
+            🎓
+          </div>
+
+          <h3>
+            Training Resources
+          </h3>
+
+          <p>
+            Training presentations, handouts,
+            rules resources and educational materials.
+          </p>
+
+          <span>
+            Coming Soon
+          </span>
+
+        </div>
+
+
+        <div class="member-resource-card coming-soon">
+
+          <div class="member-resource-icon">
+            🔗
+          </div>
+
+          <h3>
+            Important Links
+          </h3>
+
+          <p>
+            Quick access to NCAA, PAVO and other
+            useful officiating resources.
+          </p>
+
+          <span>
+            Coming Soon
+          </span>
+
+        </div>
+
+      </div>
+
+
+      <!-- OFFICIALS ROSTER -->
+
+      <div
+        id="member-roster"
+        class="member-roster-section"
+      >
+
+        <div class="member-roster-heading">
+
+          <div>
+
+            <p class="eyebrow">
+              Chapter Directory
+            </p>
+
+            <h3>
+              Officials Roster
+            </h3>
+
+          </div>
+
+          <div id="roster-meta"></div>
+
+        </div>
+
+
+        <!-- SEARCH / FILTER TOOLBAR -->
+
+        <div class="roster-toolbar">
+
+          <div class="roster-search-wrap">
+
+            <label>
+              Search Officials
+
+              <input
+                type="search"
+                id="roster-search"
+                placeholder="Search by name, certification or email..."
+              >
+            </label>
+
+          </div>
+
+
+          <div class="roster-filters">
+
+            <label>
+              Referee
+
+              <select id="filter-referee">
+                <option value="">
+                  All
+                </option>
+              </select>
+            </label>
+
+
+            <label>
+              LJ
+
+              <select id="filter-lj">
+                <option value="">
+                  All
+                </option>
+              </select>
+            </label>
+
+
+            <label>
+              Scorer
+
+              <select id="filter-scorer">
+                <option value="">
+                  All
+                </option>
+              </select>
+            </label>
+
+
+            <label>
+              Membership
+
+              <select id="filter-membership">
+                <option value="">
+                  All
+                </option>
+              </select>
+            </label>
+
+          </div>
+
+        </div>
+
+
+        <div class="roster-results-bar">
+
+          <span id="roster-results-count"></span>
+
+        </div>
+
+
+        <div class="table-wrap">
+
+          <table id="roster-table">
+
+            <thead></thead>
+
+            <tbody>
+              <tr>
+                <td class="loading">
+                  Loading roster...
+                </td>
+              </tr>
+            </tbody>
+
+          </table>
+
+        </div>
 
       </div>
 
@@ -824,7 +934,6 @@
   </div>
 
 </section>
-
 
 
 <!-- ======================================================
