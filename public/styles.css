@@ -159,3 +159,34 @@ footer{background:#0b1728;color:#cbd5e1;padding:30px 0}
   .footer-inner{display:block}
   .footer-inner>div+div{margin-top:10px}
 }
+/* =========================================================
+   BOARD MEMBER PHOTOS
+========================================================= */
+
+.board-photo-wrap {
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #f1f3f5;
+}
+
+.board-photo {
+  width: 150px;
+  height: 150px;
+  display: block;
+  object-fit: cover;
+  object-position: center;
+}
+
+/* Initials placeholder when no photo is uploaded */
+.board-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  color: white;
+  font-size: 36px;
+  font-weight: 800;
+}
