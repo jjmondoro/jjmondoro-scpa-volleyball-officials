@@ -1595,3 +1595,25 @@ a.member-resource-card:hover{
 .member-roster-section{
   margin-top:0;
 }
+/* =========================================================
+   MEMBER SECTION CLOSE BUTTONS
+========================================================= */
+
+.member-section-actions{
+  display:flex;
+  justify-content:flex-end;
+  margin-bottom:14px;
+}
+
+.member-close-button{
+  background:#fff !important;
+  color:var(--navy) !important;
+  border:1px solid var(--line) !important;
+  padding:8px 13px;
+  font-size:12px;
+  font-weight:800;
+}
+
+.member-close-button:hover{
+  background:var(--cream) !important;
+}
