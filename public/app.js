@@ -594,7 +594,65 @@ function applyRosterFilters() {
 
   renderRoster();
 }
+/* =========================================================
+   MEMBER ROSTER COLLAPSE
+========================================================= */
 
+const memberRosterToggle =
+  document.getElementById("member-roster-toggle");
+
+const memberRosterSection =
+  document.getElementById("member-roster");
+
+
+if (
+  memberRosterToggle &&
+  memberRosterSection
+) {
+
+  memberRosterToggle.addEventListener(
+    "click",
+    () => {
+
+      const isOpen =
+        memberRosterSection.style.display !== "none";
+
+      memberRosterSection.style.display =
+        isOpen
+          ? "none"
+          : "block";
+
+      memberRosterToggle.setAttribute(
+        "aria-expanded",
+        String(!isOpen)
+      );
+
+      const label =
+        memberRosterToggle.querySelector("span:first-child");
+
+      const arrow =
+        memberRosterToggle.querySelector(
+          ".member-roster-toggle-arrow"
+        );
+
+      if (label) {
+        label.textContent =
+          isOpen
+            ? "Show Officials Roster"
+            : "Hide Officials Roster";
+      }
+
+      if (arrow) {
+        arrow.textContent =
+          isOpen
+            ? "▼"
+            : "▲";
+      }
+
+    }
+  );
+
+}
 
 /* =========================================================
    SORTING
