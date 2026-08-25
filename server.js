@@ -3,6 +3,7 @@ const multer = require("multer");
 const XLSX = require("xlsx");
 const fs = require("fs");
 const path = require("path");
+const crypto = require("crypto");
 const { Pool } = require("pg");
 
 const app = express();
@@ -11,8 +12,15 @@ const PORT = process.env.PORT || 3000;
 const ADMIN_PASSWORD =
   process.env.ADMIN_PASSWORD || "change-this-password";
 
+const SESSION_SECRET = process.env.SESSION_SECRET;
+
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not configured.");
+  process.exit(1);
+}
+
+if (!SESSION_SECRET) {
+  console.error("SESSION_SECRET is not configured.");
   process.exit(1);
 }
 
@@ -35,7 +43,9 @@ const upload = multer({
     const ok = /\.(xlsx|xls)$/i.test(file.originalname);
 
     cb(
-      ok ? null : new Error("Only Excel files (.xlsx or .xls) are allowed."),
+      ok
+        ? null
+        : new Error("Only Excel files (.xlsx or .xls) are allowed."),
       ok
     );
   }
@@ -43,20 +53,156 @@ const upload = multer({
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, "public")));
+
+
+/* =========================================================
+   ADMIN LOGIN COOKIE
+========================================================= */
+
+const ADMIN_COOKIE = "scpa_admin";
+
+function parseCookies(req) {
+  const cookies = {};
+
+  const header = req.headers.cookie;
+
+  if (!header) {
+    return cookies;
+  }
+
+  header.split(";").forEach(cookie => {
+    const parts = cookie.trim().split("=");
+
+    const name = parts.shift();
+
+    const value = parts.join("=");
+
+    cookies[name] = decodeURIComponent(value);
+  });
+
+  return cookies;
+}
+
+
+function createAdminToken() {
+  const expires =
+    Date.now() + (7 * 24 * 60 * 60 * 1000);
+
+  const payload = String(expires);
+
+  const signature = crypto
+    .createHmac("sha256", SESSION_SECRET)
+    .update(payload)
+    .digest("hex");
+
+  return `${payload}.${signature}`;
+}
+
+
+function validAdminToken(token) {
+  if (!token) {
+    return false;
+  }
+
+  const parts = token.split(".");
+
+  if (parts.length !== 2) {
+    return false;
+  }
+
+  const [expires, signature] = parts;
+
+  if (!expires || !signature) {
+    return false;
+  }
+
+  if (Number(expires) < Date.now()) {
+    return false;
+  }
+
+  const expected = crypto
+    .createHmac("sha256", SESSION_SECRET)
+    .update(expires)
+    .digest("hex");
+
+  try {
+    return crypto.timingSafeEqual(
+      Buffer.from(signature),
+      Buffer.from(expected)
+    );
+  } catch {
+    return false;
+  }
+}
+
+
+function isAdmin(req) {
+  const cookies = parseCookies(req);
+
+  return validAdminToken(cookies[ADMIN_COOKIE]);
+}
+
 
 function admin(req, res, next) {
-  const supplied =
-    req.headers["x-admin-password"] || req.body.password;
-
-  if (supplied !== ADMIN_PASSWORD) {
+  if (!isAdmin(req)) {
     return res.status(401).json({
-      error: "Unauthorized"
+      error: "Admin login required."
     });
   }
 
   next();
 }
+
+
+/* =========================================================
+   LOGIN / LOGOUT
+========================================================= */
+
+app.post("/api/admin/login", (req, res) => {
+  const supplied = req.body.password;
+
+  if (supplied !== ADMIN_PASSWORD) {
+    return res.status(401).json({
+      error: "Incorrect admin password."
+    });
+  }
+
+  const token = createAdminToken();
+
+  res.setHeader(
+    "Set-Cookie",
+    `${ADMIN_COOKIE}=${encodeURIComponent(token)}; ` +
+    `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`
+  );
+
+  res.json({
+    ok: true
+  });
+});
+
+
+app.post("/api/admin/logout", (req, res) => {
+  res.setHeader(
+    "Set-Cookie",
+    `${ADMIN_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
+  );
+
+  res.json({
+    ok: true
+  });
+});
+
+
+app.get("/api/admin/status", (req, res) => {
+  res.json({
+    authenticated: isAdmin(req)
+  });
+});
+
+
+/* =========================================================
+   PUBLIC TRAININGS
+========================================================= */
 
 app.get("/api/trainings", async (req, res) => {
   try {
@@ -74,6 +220,7 @@ app.get("/api/trainings", async (req, res) => {
     `);
 
     res.json(result.rows);
+
   } catch (err) {
     console.error("Error loading trainings:", err);
 
@@ -82,6 +229,11 @@ app.get("/api/trainings", async (req, res) => {
     });
   }
 });
+
+
+/* =========================================================
+   ADMIN TRAINING MANAGEMENT
+========================================================= */
 
 app.post("/api/trainings", admin, async (req, res) => {
   try {
@@ -119,6 +271,7 @@ app.post("/api/trainings", admin, async (req, res) => {
     res.json({
       id: result.rows[0].id
     });
+
   } catch (err) {
     console.error("Error creating training:", err);
 
@@ -127,6 +280,7 @@ app.post("/api/trainings", admin, async (req, res) => {
     });
   }
 });
+
 
 app.put("/api/trainings/:id", admin, async (req, res) => {
   try {
@@ -173,9 +327,9 @@ app.put("/api/trainings/:id", admin, async (req, res) => {
     }
 
     res.json({
-      ok: true,
-      id: result.rows[0].id
+      ok: true
     });
+
   } catch (err) {
     console.error("Error updating training:", err);
 
@@ -184,6 +338,7 @@ app.put("/api/trainings/:id", admin, async (req, res) => {
     });
   }
 });
+
 
 app.delete("/api/trainings/:id", admin, async (req, res) => {
   try {
@@ -195,6 +350,7 @@ app.delete("/api/trainings/:id", admin, async (req, res) => {
     res.json({
       ok: true
     });
+
   } catch (err) {
     console.error("Error deleting training:", err);
 
@@ -203,6 +359,11 @@ app.delete("/api/trainings/:id", admin, async (req, res) => {
     });
   }
 });
+
+
+/* =========================================================
+   PUBLIC ROSTER
+========================================================= */
 
 app.get("/api/roster", async (req, res) => {
   try {
@@ -230,6 +391,7 @@ app.get("/api/roster", async (req, res) => {
       uploaded_at: row.uploaded_at,
       rows: row.rows_json || []
     });
+
   } catch (err) {
     console.error("Error loading roster:", err);
 
@@ -239,11 +401,17 @@ app.get("/api/roster", async (req, res) => {
   }
 });
 
+
+/* =========================================================
+   ADMIN ROSTER UPLOAD
+========================================================= */
+
 app.post(
   "/api/roster",
   admin,
   upload.single("file"),
   async (req, res) => {
+
     if (!req.file) {
       return res.status(400).json({
         error: "Please select an Excel file."
@@ -251,14 +419,22 @@ app.post(
     }
 
     try {
-      const workbook = XLSX.readFile(req.file.path);
+      const workbook =
+        XLSX.readFile(req.file.path);
 
-      const sheetName = workbook.SheetNames[0];
-      const sheet = workbook.Sheets[sheetName];
+      const sheetName =
+        workbook.SheetNames[0];
 
-      const rows = XLSX.utils.sheet_to_json(sheet, {
-        defval: ""
-      });
+      const sheet =
+        workbook.Sheets[sheetName];
+
+      const rows =
+        XLSX.utils.sheet_to_json(
+          sheet,
+          {
+            defval: ""
+          }
+        );
 
       await pool.query(
         `
@@ -285,6 +461,7 @@ app.post(
         ok: true,
         count: rows.length
       });
+
     } catch (err) {
       console.error("Error processing roster:", err);
 
@@ -305,11 +482,47 @@ app.post(
   }
 );
 
-app.get("*", (req, res) => {
+
+/* =========================================================
+   ADMIN PAGE
+========================================================= */
+
+app.get("/admin", (req, res) => {
   res.sendFile(
-    path.join(__dirname, "public", "index.html")
+    path.join(
+      __dirname,
+      "public",
+      "admin.html"
+    )
   );
 });
+
+
+/* =========================================================
+   PUBLIC FILES
+========================================================= */
+
+app.use(
+  express.static(
+    path.join(__dirname, "public")
+  )
+);
+
+
+/* =========================================================
+   PUBLIC WEBSITE
+========================================================= */
+
+app.get("*", (req, res) => {
+  res.sendFile(
+    path.join(
+      __dirname,
+      "public",
+      "index.html"
+    )
+  );
+});
+
 
 app.listen(PORT, () => {
   console.log(
