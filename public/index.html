@@ -381,54 +381,158 @@
      ROSTER
 ====================================================== -->
 
-<section
-  id="roster"
-  class="section"
->
+<section id="roster" class="section">
 
   <div class="container">
 
     <div class="section-heading">
 
       <div>
-
-        <p class="eyebrow">
-          Chapter Directory
-        </p>
-
-        <h2>
-          Officials Roster
-        </h2>
-
+        <p class="eyebrow">Chapter Directory</p>
+        <h2>Officials Roster</h2>
       </div>
 
       <div id="roster-meta"></div>
 
     </div>
 
+    <!-- MEMBER LOGIN -->
 
-    <div class="table-wrap">
+    <div id="roster-login-panel" class="roster-login-panel">
 
-      <table id="roster-table">
+      <div class="roster-login-card">
 
-        <thead></thead>
+        <h3>Member Roster Access</h3>
 
-        <tbody>
-          <tr>
-            <td class="loading">
-              Loading roster...
-            </td>
-          </tr>
-        </tbody>
+        <p>
+          This directory is available to South Central PA Chapter members.
+          Enter the member password to view the roster.
+        </p>
 
-      </table>
+        <form id="roster-login-form">
+
+          <label>
+            Member Password
+            <input
+              type="password"
+              id="roster-password"
+              required
+              autocomplete="current-password"
+            >
+          </label>
+
+          <button
+            class="btn primary"
+            type="submit"
+          >
+            View Roster
+          </button>
+
+          <div
+            class="form-message"
+            id="roster-login-message"
+          ></div>
+
+        </form>
+
+      </div>
+
+    </div>
+
+
+    <!-- ROSTER CONTENT -->
+
+    <div
+      id="roster-content"
+      style="display:none;"
+    >
+
+      <div class="roster-toolbar">
+
+        <div class="roster-search-wrap">
+
+          <label>
+            Search Officials
+            <input
+              type="search"
+              id="roster-search"
+              placeholder="Search by name, certification or email..."
+            >
+          </label>
+
+        </div>
+
+        <div class="roster-filters">
+
+          <label>
+            Referee
+            <select id="filter-referee">
+              <option value="">All</option>
+            </select>
+          </label>
+
+          <label>
+            LJ
+            <select id="filter-lj">
+              <option value="">All</option>
+            </select>
+          </label>
+
+          <label>
+            Scorer
+            <select id="filter-scorer">
+              <option value="">All</option>
+            </select>
+          </label>
+
+          <label>
+            Membership
+            <select id="filter-membership">
+              <option value="">All</option>
+            </select>
+          </label>
+
+        </div>
+
+      </div>
+
+      <div class="roster-results-bar">
+
+        <span id="roster-results-count"></span>
+
+        <button
+          class="btn secondary roster-logout-btn"
+          id="roster-logout"
+          type="button"
+        >
+          Log Out of Roster
+        </button>
+
+      </div>
+
+      <div class="table-wrap">
+
+        <table id="roster-table">
+
+          <thead></thead>
+
+          <tbody>
+            <tr>
+              <td class="loading">
+                Loading roster...
+              </td>
+            </tr>
+          </tbody>
+
+        </table>
+
+      </div>
 
     </div>
 
   </div>
 
 </section>
-
 
 <!-- ======================================================
      ABOUT
