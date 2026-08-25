@@ -1,6 +1,7 @@
 let adminSessions = [];
 let adminMeetings = [];
 let adminBoardMembers = [];
+let adminDocuments = [];
 
 
 /* =========================================================
@@ -35,6 +36,7 @@ function showAdminPortal() {
   loadAdminSessions();
   loadAdminMeetings();
   loadAdminBoardMembers();
+  loadAdminDocuments();
 }
 
 
@@ -104,10 +106,11 @@ document
     }
 
     resetTrainingForm();
-    resetMeetingForm();
-    resetBoardForm();
+resetMeetingForm();
+resetBoardForm();
+resetDocumentForm();
 
-    showLogin();
+showLogin();
   });
 
 
@@ -1162,6 +1165,622 @@ document
     loadAdminBoardMembers();
   });
 
+/* =========================================================
+   MEMBER DOCUMENTS
+========================================================= */
+
+async function loadAdminDocuments() {
+
+  const box =
+    document.getElementById(
+      "admin-document-list"
+    );
+
+  if (!box) return;
+
+
+  box.innerHTML =
+    '<div class="loading">Loading documents...</div>';
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/documents"
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (response.status === 401) {
+      showLogin();
+      return;
+    }
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Unable to load documents."
+      );
+    }
+
+
+    adminDocuments = data;
+
+
+    if (!data.length) {
+
+      box.innerHTML = `
+        <p class="muted">
+          No member documents have been uploaded yet.
+        </p>
+      `;
+
+      return;
+    }
+
+
+    box.innerHTML =
+      data.map(documentItem => `
+
+        <div class="admin-list-item">
+
+          <div class="admin-list-main">
+
+            <strong>
+              ${escapeHtml(documentItem.title)}
+            </strong>
+
+
+            <div class="small">
+              ${escapeHtml(documentItem.category)}
+            </div>
+
+
+            <div class="small">
+              ${escapeHtml(documentItem.filename)}
+            </div>
+
+
+            ${
+              documentItem.description
+                ? `
+                    <div class="small">
+                      ${escapeHtml(documentItem.description)}
+                    </div>
+                  `
+                : ""
+            }
+
+
+            <div class="small">
+              Display order:
+              ${escapeHtml(documentItem.display_order)}
+            </div>
+
+          </div>
+
+
+          <div class="session-actions">
+
+            <button
+              type="button"
+              class="btn secondary edit-document"
+              data-id="${documentItem.id}"
+            >
+              Edit
+            </button>
+
+
+            <button
+              type="button"
+              class="btn danger delete-document"
+              data-id="${documentItem.id}"
+            >
+              Delete
+            </button>
+
+          </div>
+
+        </div>
+
+      `).join("");
+
+
+    document
+      .querySelectorAll(
+        ".edit-document"
+      )
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            startEditingDocument(
+              button.dataset.id
+            );
+
+          }
+        );
+
+      });
+
+
+    document
+      .querySelectorAll(
+        ".delete-document"
+      )
+      .forEach(button => {
+
+        button.addEventListener(
+          "click",
+          () => {
+
+            deleteDocument(
+              button.dataset.id
+            );
+
+          }
+        );
+
+      });
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    box.innerHTML = `
+      <div class="loading">
+        Unable to load documents.
+      </div>
+    `;
+
+  }
+}
+
+
+/* =========================================================
+   DOCUMENT FORM SUBMIT
+========================================================= */
+
+document
+  .getElementById("document-form")
+  .addEventListener(
+    "submit",
+    async e => {
+
+      e.preventDefault();
+
+
+      const form =
+        e.currentTarget;
+
+
+      const message =
+        document.getElementById(
+          "document-message"
+        );
+
+
+      const id =
+        document.getElementById(
+          "document-id"
+        ).value;
+
+
+      const fileInput =
+        document.getElementById(
+          "document-file"
+        );
+
+
+      const isEditing =
+        Boolean(id);
+
+
+      /*
+        A file is required when creating
+        a brand-new document.
+
+        When editing, the existing file
+        may be retained.
+      */
+
+      if (
+        !isEditing &&
+        !fileInput.files.length
+      ) {
+
+        message.textContent =
+          "Please select a document to upload.";
+
+        return;
+      }
+
+
+      const formData =
+        new FormData(form);
+
+
+      const url =
+        isEditing
+          ? `/api/documents/${id}`
+          : "/api/documents";
+
+
+      const method =
+        isEditing
+          ? "PUT"
+          : "POST";
+
+
+      message.textContent =
+        isEditing
+          ? "Updating document..."
+          : "Uploading document...";
+
+
+      try {
+
+        const response =
+          await fetch(
+            url,
+            {
+              method,
+              body: formData
+            }
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (
+          response.status === 401
+        ) {
+
+          showLogin();
+          return;
+        }
+
+
+        if (!response.ok) {
+
+          message.textContent =
+            result.error ||
+            "Could not save the document.";
+
+          return;
+        }
+
+
+        message.textContent =
+          isEditing
+            ? "Document updated."
+            : "Document uploaded.";
+
+
+        resetDocumentForm(false);
+
+
+        await loadAdminDocuments();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        message.textContent =
+          "Unable to communicate with the server.";
+
+      }
+
+    }
+  );
+
+
+/* =========================================================
+   EDIT DOCUMENT
+========================================================= */
+
+function startEditingDocument(id) {
+
+  const documentItem =
+    adminDocuments.find(
+      item =>
+        String(item.id) ===
+        String(id)
+    );
+
+
+  if (!documentItem) return;
+
+
+  document.getElementById(
+    "document-id"
+  ).value =
+    documentItem.id;
+
+
+  document.getElementById(
+    "document-title"
+  ).value =
+    documentItem.title || "";
+
+
+  document.getElementById(
+    "document-category"
+  ).value =
+    documentItem.category ||
+    "Chapter Documents";
+
+
+  document.getElementById(
+    "document-description"
+  ).value =
+    documentItem.description || "";
+
+
+  document.getElementById(
+    "document-order"
+  ).value =
+    documentItem.display_order ?? 0;
+
+
+  document.getElementById(
+    "document-file"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "document-form-title"
+  ).textContent =
+    "Edit Member Document";
+
+
+  document.getElementById(
+    "document-submit"
+  ).textContent =
+    "Update Document";
+
+
+  document.getElementById(
+    "document-cancel"
+  ).style.display =
+    "inline-flex";
+
+
+  document.getElementById(
+    "document-message"
+  ).textContent =
+    "Editing existing document.";
+
+
+  document.getElementById(
+    "document-current-file"
+  ).innerHTML = `
+
+    <p class="small">
+
+      Current file:
+      <strong>
+        ${escapeHtml(documentItem.filename)}
+      </strong>
+
+    </p>
+
+    <p class="small">
+      Leave the File field empty to keep
+      the existing file, or choose a new
+      file to replace it.
+    </p>
+
+  `;
+
+
+  document
+    .getElementById(
+      "document-form"
+    )
+    .scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+
+}
+
+
+/* =========================================================
+   CANCEL DOCUMENT EDIT
+========================================================= */
+
+document
+  .getElementById(
+    "document-cancel"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      resetDocumentForm();
+
+    }
+  );
+
+
+/* =========================================================
+   RESET DOCUMENT FORM
+========================================================= */
+
+function resetDocumentForm(
+  clearMessage = true
+) {
+
+  document
+    .getElementById(
+      "document-form"
+    )
+    .reset();
+
+
+  document.getElementById(
+    "document-id"
+  ).value =
+    "";
+
+
+  document.getElementById(
+    "document-order"
+  ).value =
+    "0";
+
+
+  document.getElementById(
+    "document-current-file"
+  ).innerHTML =
+    "";
+
+
+  document.getElementById(
+    "document-form-title"
+  ).textContent =
+    "Add Member Document";
+
+
+  document.getElementById(
+    "document-submit"
+  ).textContent =
+    "Upload Document";
+
+
+  document.getElementById(
+    "document-cancel"
+  ).style.display =
+    "none";
+
+
+  if (clearMessage) {
+
+    document.getElementById(
+      "document-message"
+    ).textContent =
+      "";
+
+  }
+
+}
+
+
+/* =========================================================
+   DELETE DOCUMENT
+========================================================= */
+
+async function deleteDocument(id) {
+
+  const documentItem =
+    adminDocuments.find(
+      item =>
+        String(item.id) ===
+        String(id)
+    );
+
+
+  if (!documentItem) return;
+
+
+  const confirmed =
+    window.confirm(
+      `Delete "${documentItem.title}"?\n\n` +
+      `This will permanently remove the uploaded file.\n\n` +
+      `This cannot be undone.`
+    );
+
+
+  if (!confirmed) return;
+
+
+  try {
+
+    const response =
+      await fetch(
+        `/api/documents/${id}`,
+        {
+          method: "DELETE"
+        }
+      );
+
+
+    const result =
+      await response.json();
+
+
+    if (
+      response.status === 401
+    ) {
+
+      showLogin();
+      return;
+    }
+
+
+    if (!response.ok) {
+
+      alert(
+        result.error ||
+        "Could not delete the document."
+      );
+
+      return;
+    }
+
+
+    resetDocumentForm();
+
+
+    await loadAdminDocuments();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    alert(
+      "Unable to communicate with the server."
+    );
+
+  }
+
+}
+
+
+/* =========================================================
+   REFRESH DOCUMENTS
+========================================================= */
+
+document
+  .getElementById(
+    "refresh-documents"
+  )
+  .addEventListener(
+    "click",
+    () => {
+
+      loadAdminDocuments();
+
+    }
+  );
 
 /* =========================================================
    ROSTER UPLOAD
