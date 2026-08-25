@@ -2517,7 +2517,30 @@ if (
   );
 
 }
+const closeRosterSection =
+  document.getElementById("close-roster-section");
 
+if (closeRosterSection) {
+  closeRosterSection.addEventListener(
+    "click",
+    () => {
+      setRosterOpen(false);
+    }
+  );
+}
+
+
+const closeDocumentsSection =
+  document.getElementById("close-documents-section");
+
+if (closeDocumentsSection) {
+  closeDocumentsSection.addEventListener(
+    "click",
+    () => {
+      setDocumentsOpen(false);
+    }
+  );
+}
 
 /* =========================================================
    START WEBSITE
