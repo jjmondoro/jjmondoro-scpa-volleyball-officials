@@ -144,7 +144,33 @@ app.use(
   })
 );
 
+const documentUpload = multer({
+  dest: uploadDir,
 
+  limits: {
+    fileSize: 25 * 1024 * 1024
+  },
+
+  fileFilter: (req, file, cb) => {
+
+    const allowedExtensions =
+      /\.(pdf|doc|docx|xls|xlsx|ppt|pptx|txt)$/i;
+
+    const ok =
+      allowedExtensions.test(
+        file.originalname
+      );
+
+    cb(
+      ok
+        ? null
+        : new Error(
+            "Only PDF, Word, Excel, PowerPoint and text files are allowed."
+          ),
+      ok
+    );
+  }
+});
 /* =========================================================
    COOKIE HELPERS
 ========================================================= */
