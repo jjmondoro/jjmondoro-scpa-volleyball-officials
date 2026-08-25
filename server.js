@@ -128,6 +128,63 @@ app.post("/api/trainings", admin, async (req, res) => {
   }
 });
 
+app.put("/api/trainings/:id", admin, async (req, res) => {
+  try {
+    const {
+      title,
+      date,
+      type,
+      location,
+      description
+    } = req.body;
+
+    if (!title || !date || !type) {
+      return res.status(400).json({
+        error: "Title, date and type are required."
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE trainings
+      SET
+        title = $1,
+        date = $2,
+        type = $3,
+        location = $4,
+        description = $5
+      WHERE id = $6
+      RETURNING id
+      `,
+      [
+        title,
+        date,
+        type,
+        location || "",
+        description || "",
+        req.params.id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Session not found."
+      });
+    }
+
+    res.json({
+      ok: true,
+      id: result.rows[0].id
+    });
+  } catch (err) {
+    console.error("Error updating training:", err);
+
+    res.status(500).json({
+      error: "Could not update the training session."
+    });
+  }
+});
+
 app.delete("/api/trainings/:id", admin, async (req, res) => {
   try {
     await pool.query(
