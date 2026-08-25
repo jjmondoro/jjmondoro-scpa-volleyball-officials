@@ -1599,7 +1599,104 @@ function cleanupUploadedFile(
   } catch {}
 }
 
+/* =========================================================
+   MEMBER DOCUMENT HELPERS
+========================================================= */
 
+async function uploadMemberDocument(file) {
+
+  const extension =
+    path
+      .extname(file.originalname)
+      .toLowerCase();
+
+
+  const storageName =
+    `${Date.now()}-${crypto.randomUUID()}${extension}`;
+
+
+  const fileBuffer =
+    fs.readFileSync(file.path);
+
+
+  const { error } =
+    await supabase
+      .storage
+      .from("member-documents")
+      .upload(
+        storageName,
+        fileBuffer,
+        {
+          contentType:
+            file.mimetype,
+
+          upsert:
+            false
+        }
+      );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  return storageName;
+}
+
+
+async function deleteMemberDocumentFromStorage(
+  storagePath
+) {
+
+  if (!storagePath) {
+    return;
+  }
+
+
+  const { error } =
+    await supabase
+      .storage
+      .from("member-documents")
+      .remove([
+        storagePath
+      ]);
+
+
+  if (error) {
+    console.error(
+      "Could not remove member document:",
+      error
+    );
+  }
+}
+
+
+async function createDocumentDownloadUrl(
+  storagePath
+) {
+
+  /*
+    Signed URL remains valid for 5 minutes.
+  */
+
+  const { data, error } =
+    await supabase
+      .storage
+      .from("member-documents")
+      .createSignedUrl(
+        storagePath,
+        300
+      );
+
+
+  if (error) {
+    throw error;
+  }
+
+
+  return data.signedUrl;
+}
 /* =========================================================
    PROTECTED MEMBER ROSTER
 ========================================================= */
