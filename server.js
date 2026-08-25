@@ -5,6 +5,7 @@ const fs = require("fs");
 const path = require("path");
 const crypto = require("crypto");
 const { Pool } = require("pg");
+const { createClient } = require("@supabase/supabase-js");
 
 const app = express();
 
@@ -13,6 +14,9 @@ const ADMIN_PASSWORD =
   process.env.ADMIN_PASSWORD || "change-this-password";
 
 const SESSION_SECRET = process.env.SESSION_SECRET;
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_SERVICE_ROLE_KEY =
+  process.env.SUPABASE_SERVICE_ROLE_KEY;
 
 if (!process.env.DATABASE_URL) {
   console.error("DATABASE_URL is not configured.");
@@ -24,6 +28,11 @@ if (!SESSION_SECRET) {
   process.exit(1);
 }
 
+if (!SUPABASE_URL || !SUPABASE_SERVICE_ROLE_KEY) {
+  console.error("Supabase API environment variables are not configured.");
+  process.exit(1);
+}
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
@@ -31,10 +40,15 @@ const pool = new Pool({
   }
 });
 
+const supabase = createClient(
+  SUPABASE_URL,
+  SUPABASE_SERVICE_ROLE_KEY
+);
+
 const uploadDir = path.join(__dirname, "uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 
-const upload = multer({
+const excelUpload = multer({
   dest: uploadDir,
   limits: {
     fileSize: 10 * 1024 * 1024
@@ -46,6 +60,23 @@ const upload = multer({
       ok
         ? null
         : new Error("Only Excel files (.xlsx or .xls) are allowed."),
+      ok
+    );
+  }
+});
+
+const imageUpload = multer({
+  dest: uploadDir,
+  limits: {
+    fileSize: 5 * 1024 * 1024
+  },
+  fileFilter: (req, file, cb) => {
+    const ok = /\.(jpg|jpeg|png|webp)$/i.test(file.originalname);
+
+    cb(
+      ok
+        ? null
+        : new Error("Only JPG, PNG or WebP images are allowed."),
       ok
     );
   }
@@ -63,18 +94,13 @@ const ADMIN_COOKIE = "scpa_admin";
 
 function parseCookies(req) {
   const cookies = {};
-
   const header = req.headers.cookie;
 
-  if (!header) {
-    return cookies;
-  }
+  if (!header) return cookies;
 
   header.split(";").forEach(cookie => {
     const parts = cookie.trim().split("=");
-
     const name = parts.shift();
-
     const value = parts.join("=");
 
     cookies[name] = decodeURIComponent(value);
@@ -82,7 +108,6 @@ function parseCookies(req) {
 
   return cookies;
 }
-
 
 function createAdminToken() {
   const expires =
@@ -98,23 +123,14 @@ function createAdminToken() {
   return `${payload}.${signature}`;
 }
 
-
 function validAdminToken(token) {
-  if (!token) {
-    return false;
-  }
+  if (!token) return false;
 
   const parts = token.split(".");
 
-  if (parts.length !== 2) {
-    return false;
-  }
+  if (parts.length !== 2) return false;
 
   const [expires, signature] = parts;
-
-  if (!expires || !signature) {
-    return false;
-  }
 
   if (Number(expires) < Date.now()) {
     return false;
@@ -135,13 +151,10 @@ function validAdminToken(token) {
   }
 }
 
-
 function isAdmin(req) {
   const cookies = parseCookies(req);
-
   return validAdminToken(cookies[ADMIN_COOKIE]);
 }
-
 
 function admin(req, res, next) {
   if (!isAdmin(req)) {
@@ -155,7 +168,7 @@ function admin(req, res, next) {
 
 
 /* =========================================================
-   LOGIN / LOGOUT
+   ADMIN LOGIN / LOGOUT
 ========================================================= */
 
 app.post("/api/admin/login", (req, res) => {
@@ -175,11 +188,8 @@ app.post("/api/admin/login", (req, res) => {
     `HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=604800`
   );
 
-  res.json({
-    ok: true
-  });
+  res.json({ ok: true });
 });
-
 
 app.post("/api/admin/logout", (req, res) => {
   res.setHeader(
@@ -187,11 +197,8 @@ app.post("/api/admin/logout", (req, res) => {
     `${ADMIN_COOKIE}=; HttpOnly; Secure; SameSite=Strict; Path=/; Max-Age=0`
   );
 
-  res.json({
-    ok: true
-  });
+  res.json({ ok: true });
 });
-
 
 app.get("/api/admin/status", (req, res) => {
   res.json({
@@ -201,7 +208,7 @@ app.get("/api/admin/status", (req, res) => {
 
 
 /* =========================================================
-   PUBLIC TRAININGS
+   TRAININGS
 ========================================================= */
 
 app.get("/api/trainings", async (req, res) => {
@@ -220,7 +227,6 @@ app.get("/api/trainings", async (req, res) => {
     `);
 
     res.json(result.rows);
-
   } catch (err) {
     console.error("Error loading trainings:", err);
 
@@ -229,11 +235,6 @@ app.get("/api/trainings", async (req, res) => {
     });
   }
 });
-
-
-/* =========================================================
-   ADMIN TRAINING MANAGEMENT
-========================================================= */
 
 app.post("/api/trainings", admin, async (req, res) => {
   try {
@@ -271,7 +272,6 @@ app.post("/api/trainings", admin, async (req, res) => {
     res.json({
       id: result.rows[0].id
     });
-
   } catch (err) {
     console.error("Error creating training:", err);
 
@@ -280,7 +280,6 @@ app.post("/api/trainings", admin, async (req, res) => {
     });
   }
 });
-
 
 app.put("/api/trainings/:id", admin, async (req, res) => {
   try {
@@ -326,10 +325,7 @@ app.put("/api/trainings/:id", admin, async (req, res) => {
       });
     }
 
-    res.json({
-      ok: true
-    });
-
+    res.json({ ok: true });
   } catch (err) {
     console.error("Error updating training:", err);
 
@@ -339,7 +335,6 @@ app.put("/api/trainings/:id", admin, async (req, res) => {
   }
 });
 
-
 app.delete("/api/trainings/:id", admin, async (req, res) => {
   try {
     await pool.query(
@@ -347,10 +342,7 @@ app.delete("/api/trainings/:id", admin, async (req, res) => {
       [req.params.id]
     );
 
-    res.json({
-      ok: true
-    });
-
+    res.json({ ok: true });
   } catch (err) {
     console.error("Error deleting training:", err);
 
@@ -359,6 +351,462 @@ app.delete("/api/trainings/:id", admin, async (req, res) => {
     });
   }
 });
+
+
+/* =========================================================
+   CHAPTER MEETINGS
+========================================================= */
+
+app.get("/api/meetings", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        title,
+        meeting_date,
+        meeting_time,
+        location,
+        description,
+        meeting_link,
+        created_at
+      FROM meetings
+      ORDER BY meeting_date ASC, meeting_time ASC NULLS LAST, id DESC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error loading meetings:", err);
+
+    res.status(500).json({
+      error: "Could not load chapter meetings."
+    });
+  }
+});
+
+app.post("/api/meetings", admin, async (req, res) => {
+  try {
+    const {
+      title,
+      meeting_date,
+      meeting_time,
+      location,
+      description,
+      meeting_link
+    } = req.body;
+
+    if (!title || !meeting_date) {
+      return res.status(400).json({
+        error: "Meeting title and date are required."
+      });
+    }
+
+    const result = await pool.query(
+      `
+      INSERT INTO meetings
+        (
+          title,
+          meeting_date,
+          meeting_time,
+          location,
+          description,
+          meeting_link
+        )
+      VALUES
+        ($1, $2, $3, $4, $5, $6)
+      RETURNING id
+      `,
+      [
+        title,
+        meeting_date,
+        meeting_time || null,
+        location || "",
+        description || "",
+        meeting_link || ""
+      ]
+    );
+
+    res.json({
+      id: result.rows[0].id
+    });
+  } catch (err) {
+    console.error("Error creating meeting:", err);
+
+    res.status(500).json({
+      error: "Could not save the meeting."
+    });
+  }
+});
+
+app.put("/api/meetings/:id", admin, async (req, res) => {
+  try {
+    const {
+      title,
+      meeting_date,
+      meeting_time,
+      location,
+      description,
+      meeting_link
+    } = req.body;
+
+    if (!title || !meeting_date) {
+      return res.status(400).json({
+        error: "Meeting title and date are required."
+      });
+    }
+
+    const result = await pool.query(
+      `
+      UPDATE meetings
+      SET
+        title = $1,
+        meeting_date = $2,
+        meeting_time = $3,
+        location = $4,
+        description = $5,
+        meeting_link = $6
+      WHERE id = $7
+      RETURNING id
+      `,
+      [
+        title,
+        meeting_date,
+        meeting_time || null,
+        location || "",
+        description || "",
+        meeting_link || "",
+        req.params.id
+      ]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Meeting not found."
+      });
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error updating meeting:", err);
+
+    res.status(500).json({
+      error: "Could not update the meeting."
+    });
+  }
+});
+
+app.delete("/api/meetings/:id", admin, async (req, res) => {
+  try {
+    await pool.query(
+      "DELETE FROM meetings WHERE id = $1",
+      [req.params.id]
+    );
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error deleting meeting:", err);
+
+    res.status(500).json({
+      error: "Could not delete the meeting."
+    });
+  }
+});
+
+
+/* =========================================================
+   BOARD MEMBERS
+========================================================= */
+
+app.get("/api/board-members", async (req, res) => {
+  try {
+    const result = await pool.query(`
+      SELECT
+        id,
+        name,
+        position_title,
+        description,
+        photo_url,
+        display_order,
+        created_at
+      FROM board_members
+      ORDER BY display_order ASC, id ASC
+    `);
+
+    res.json(result.rows);
+  } catch (err) {
+    console.error("Error loading board members:", err);
+
+    res.status(500).json({
+      error: "Could not load board members."
+    });
+  }
+});
+
+app.post(
+  "/api/board-members",
+  admin,
+  imageUpload.single("photo"),
+  async (req, res) => {
+    try {
+      const {
+        name,
+        position_title,
+        description,
+        display_order
+      } = req.body;
+
+      if (!name || !position_title) {
+        return res.status(400).json({
+          error: "Name and position title are required."
+        });
+      }
+
+      let photoUrl = "";
+
+      if (req.file) {
+        photoUrl = await uploadBoardPhoto(req.file);
+      }
+
+      const result = await pool.query(
+        `
+        INSERT INTO board_members
+          (
+            name,
+            position_title,
+            description,
+            photo_url,
+            display_order
+          )
+        VALUES
+          ($1, $2, $3, $4, $5)
+        RETURNING id
+        `,
+        [
+          name,
+          position_title,
+          description || "",
+          photoUrl,
+          Number(display_order) || 0
+        ]
+      );
+
+      res.json({
+        id: result.rows[0].id
+      });
+    } catch (err) {
+      console.error("Error creating board member:", err);
+
+      res.status(500).json({
+        error: "Could not save the board member."
+      });
+    } finally {
+      cleanupUploadedFile(req.file);
+    }
+  }
+);
+
+app.put(
+  "/api/board-members/:id",
+  admin,
+  imageUpload.single("photo"),
+  async (req, res) => {
+    try {
+      const {
+        name,
+        position_title,
+        description,
+        display_order
+      } = req.body;
+
+      if (!name || !position_title) {
+        return res.status(400).json({
+          error: "Name and position title are required."
+        });
+      }
+
+      const existingResult = await pool.query(
+        `
+        SELECT photo_url
+        FROM board_members
+        WHERE id = $1
+        `,
+        [req.params.id]
+      );
+
+      if (existingResult.rows.length === 0) {
+        return res.status(404).json({
+          error: "Board member not found."
+        });
+      }
+
+      let photoUrl =
+        existingResult.rows[0].photo_url || "";
+
+      if (req.file) {
+        const newPhotoUrl =
+          await uploadBoardPhoto(req.file);
+
+        if (photoUrl) {
+          await deleteBoardPhotoFromStorage(photoUrl);
+        }
+
+        photoUrl = newPhotoUrl;
+      }
+
+      await pool.query(
+        `
+        UPDATE board_members
+        SET
+          name = $1,
+          position_title = $2,
+          description = $3,
+          photo_url = $4,
+          display_order = $5
+        WHERE id = $6
+        `,
+        [
+          name,
+          position_title,
+          description || "",
+          photoUrl,
+          Number(display_order) || 0,
+          req.params.id
+        ]
+      );
+
+      res.json({ ok: true });
+    } catch (err) {
+      console.error("Error updating board member:", err);
+
+      res.status(500).json({
+        error: "Could not update the board member."
+      });
+    } finally {
+      cleanupUploadedFile(req.file);
+    }
+  }
+);
+
+app.delete("/api/board-members/:id", admin, async (req, res) => {
+  try {
+    const result = await pool.query(
+      `
+      SELECT photo_url
+      FROM board_members
+      WHERE id = $1
+      `,
+      [req.params.id]
+    );
+
+    if (result.rows.length === 0) {
+      return res.status(404).json({
+        error: "Board member not found."
+      });
+    }
+
+    const photoUrl =
+      result.rows[0].photo_url || "";
+
+    await pool.query(
+      "DELETE FROM board_members WHERE id = $1",
+      [req.params.id]
+    );
+
+    if (photoUrl) {
+      await deleteBoardPhotoFromStorage(photoUrl);
+    }
+
+    res.json({ ok: true });
+  } catch (err) {
+    console.error("Error deleting board member:", err);
+
+    res.status(500).json({
+      error: "Could not delete the board member."
+    });
+  }
+});
+
+
+/* =========================================================
+   BOARD PHOTO HELPERS
+========================================================= */
+
+async function uploadBoardPhoto(file) {
+  const extension =
+    path.extname(file.originalname).toLowerCase();
+
+  const storageName =
+    `${Date.now()}-${crypto.randomUUID()}${extension}`;
+
+  const fileBuffer =
+    fs.readFileSync(file.path);
+
+  const { error } = await supabase
+    .storage
+    .from("board-photos")
+    .upload(
+      storageName,
+      fileBuffer,
+      {
+        contentType: file.mimetype,
+        upsert: false
+      }
+    );
+
+  if (error) {
+    throw error;
+  }
+
+  const { data } = supabase
+    .storage
+    .from("board-photos")
+    .getPublicUrl(storageName);
+
+  return data.publicUrl;
+}
+
+async function deleteBoardPhotoFromStorage(photoUrl) {
+  try {
+    const marker =
+      "/storage/v1/object/public/board-photos/";
+
+    const markerIndex =
+      photoUrl.indexOf(marker);
+
+    if (markerIndex === -1) {
+      return;
+    }
+
+    const storagePath =
+      decodeURIComponent(
+        photoUrl.substring(
+          markerIndex + marker.length
+        )
+      );
+
+    await supabase
+      .storage
+      .from("board-photos")
+      .remove([storagePath]);
+
+  } catch (err) {
+    console.error(
+      "Could not remove old board photo:",
+      err
+    );
+  }
+}
+
+function cleanupUploadedFile(file) {
+  try {
+    if (
+      file &&
+      file.path &&
+      fs.existsSync(file.path)
+    ) {
+      fs.unlinkSync(file.path);
+    }
+  } catch {}
+}
 
 
 /* =========================================================
@@ -391,7 +839,6 @@ app.get("/api/roster", async (req, res) => {
       uploaded_at: row.uploaded_at,
       rows: row.rows_json || []
     });
-
   } catch (err) {
     console.error("Error loading roster:", err);
 
@@ -409,7 +856,7 @@ app.get("/api/roster", async (req, res) => {
 app.post(
   "/api/roster",
   admin,
-  upload.single("file"),
+  excelUpload.single("file"),
   async (req, res) => {
 
     if (!req.file) {
@@ -465,15 +912,7 @@ app.post(
     } catch (err) {
       console.error("Error processing roster:", err);
 
-      try {
-        if (
-          req.file &&
-          req.file.path &&
-          fs.existsSync(req.file.path)
-        ) {
-          fs.unlinkSync(req.file.path);
-        }
-      } catch {}
+      cleanupUploadedFile(req.file);
 
       res.status(400).json({
         error: "Could not read that Excel file."
