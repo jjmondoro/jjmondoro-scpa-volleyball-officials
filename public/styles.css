@@ -84,6 +84,70 @@ textarea{resize:vertical}
 footer{background:#0b1728;color:#cbd5e1;padding:30px 0}
 .footer-inner{display:flex;justify-content:space-between;gap:20px;font-size:13px}
 .footer-inner span{color:#7f8da0}
+.manage-sessions-card{
+  margin-top:20px;
+}
+
+.manage-sessions-heading{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:20px;
+  margin-bottom:24px;
+}
+
+.admin-session-table-wrap{
+  overflow-x:auto;
+  border:1px solid var(--line);
+  border-radius:12px;
+}
+
+.admin-session-table{
+  width:100%;
+  min-width:760px;
+  border-collapse:collapse;
+}
+
+.admin-session-table th{
+  background:var(--navy);
+  color:#fff;
+  padding:14px 16px;
+}
+
+.admin-session-table td{
+  padding:14px 16px;
+  border-bottom:1px solid var(--line);
+}
+
+.admin-session-table tr:last-child td{
+  border-bottom:0;
+}
+
+.session-actions{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+
+.admin-card .btn.secondary{
+  background:#fff;
+  color:var(--navy);
+  border:1px solid #ccd3db;
+}
+
+.admin-card .btn.secondary:hover{
+  background:var(--cream);
+}
+
+.btn.danger{
+  background:#f3f3f3;
+  color:#9b1c1c;
+  border:1px solid #e2e2e2;
+}
+
+.btn.danger:hover{
+  background:#fde8e8;
+}
 @media(max-width:850px){
   nav{display:none}
   .hero-grid,.two-col,.admin-grid{grid-template-columns:1fr}
