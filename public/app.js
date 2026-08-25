@@ -604,6 +604,55 @@ const memberRosterToggle =
 const memberRosterSection =
   document.getElementById("member-roster");
 
+const openRosterCard =
+  document.getElementById("open-roster-card");
+
+
+function setRosterOpen(isOpen) {
+
+  if (!memberRosterSection) {
+    return;
+  }
+
+  memberRosterSection.style.display =
+    isOpen ? "block" : "none";
+
+
+  if (memberRosterToggle) {
+
+    memberRosterToggle.setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
+
+    const label =
+      memberRosterToggle.querySelector(
+        "span:first-child"
+      );
+
+    const arrow =
+      memberRosterToggle.querySelector(
+        ".member-roster-toggle-arrow"
+      );
+
+
+    if (label) {
+      label.textContent =
+        isOpen
+          ? "Hide Officials Roster"
+          : "Show Officials Roster";
+    }
+
+
+    if (arrow) {
+      arrow.textContent =
+        isOpen ? "▲" : "▼";
+    }
+
+  }
+
+}
+
 
 if (
   memberRosterToggle &&
@@ -614,40 +663,39 @@ if (
     "click",
     () => {
 
-      const isOpen =
+      const isCurrentlyOpen =
         memberRosterSection.style.display !== "none";
 
-      memberRosterSection.style.display =
-        isOpen
-          ? "none"
-          : "block";
+      setRosterOpen(!isCurrentlyOpen);
 
-      memberRosterToggle.setAttribute(
-        "aria-expanded",
-        String(!isOpen)
-      );
+    }
+  );
 
-      const label =
-        memberRosterToggle.querySelector("span:first-child");
+}
 
-      const arrow =
-        memberRosterToggle.querySelector(
-          ".member-roster-toggle-arrow"
-        );
 
-      if (label) {
-        label.textContent =
-          isOpen
-            ? "Show Officials Roster"
-            : "Hide Officials Roster";
-      }
+if (
+  openRosterCard &&
+  memberRosterSection
+) {
 
-      if (arrow) {
-        arrow.textContent =
-          isOpen
-            ? "▼"
-            : "▲";
-      }
+  openRosterCard.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+
+      setRosterOpen(true);
+
+
+      setTimeout(() => {
+
+        memberRosterSection.scrollIntoView({
+          behavior: "smooth",
+          block: "start"
+        });
+
+      }, 100);
 
     }
   );
