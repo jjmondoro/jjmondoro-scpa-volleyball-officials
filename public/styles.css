@@ -189,3 +189,100 @@ footer{background:#0b1728;color:#cbd5e1;padding:30px 0}
   font-size: 36px;
   font-weight: 800;
 }
+/* =========================================================
+   BOARD MEMBERS - POLISHED CARDS
+========================================================= */
+
+.board-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 22px;
+  align-items: stretch;
+}
+
+.board-card {
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  box-shadow: 0 8px 24px rgba(16, 35, 63, 0.06);
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+
+.board-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 14px 35px rgba(16, 35, 63, 0.12);
+}
+
+.board-photo-wrap {
+  width: 100%;
+  height: 210px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: var(--cream);
+  margin-bottom: 18px;
+}
+
+.board-photo {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+  object-position: center top;
+}
+
+.board-photo-placeholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--navy);
+  color: #fff;
+  font-size: 42px;
+  font-weight: 800;
+}
+
+.board-card-content {
+  padding: 0;
+}
+
+.board-card-content h3 {
+  margin: 0 0 4px;
+  color: var(--navy);
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+.board-position {
+  color: #a47b1f;
+  font-weight: 800;
+  font-size: 13px;
+  text-transform: uppercase;
+  letter-spacing: .06em;
+  margin-bottom: 12px;
+}
+
+.board-card-content p {
+  margin: 0;
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+@media (max-width: 950px) {
+  .board-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 650px) {
+  .board-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .board-photo-wrap {
+    height: 260px;
+  }
+}
