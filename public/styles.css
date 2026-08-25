@@ -1075,3 +1075,136 @@ footer{
   }
 
 }
+/* =========================================================
+   ROSTER TABLE - POLISHED
+========================================================= */
+
+#roster-table{
+  width:100%;
+  border-collapse:separate;
+  border-spacing:0;
+  min-width:1000px;
+}
+
+#roster-table thead th{
+  background:var(--navy);
+  color:#fff;
+  padding:12px 14px;
+  border:0;
+  border-bottom:1px solid #263c5a;
+  position:static;
+  white-space:nowrap;
+}
+
+#roster-table thead th:first-child{
+  border-radius:10px 0 0 0;
+}
+
+#roster-table thead th:last-child{
+  border-radius:0 10px 0 0;
+}
+
+#roster-table tbody td{
+  padding:11px 14px;
+  border-bottom:1px solid var(--line);
+  background:#fff;
+  font-size:13px;
+  vertical-align:middle;
+}
+
+#roster-table tbody tr:hover td{
+  background:#f8fafc;
+}
+
+#roster-table tbody tr:last-child td{
+  border-bottom:0;
+}
+
+
+/* Sortable headings */
+
+#roster-table .roster-sort{
+  appearance:none;
+  border:0;
+  outline:0;
+  background:transparent;
+  color:#fff;
+  font:inherit;
+  font-size:12px;
+  font-weight:800;
+  padding:0;
+  margin:0;
+  cursor:pointer;
+  white-space:nowrap;
+  text-align:left;
+}
+
+#roster-table .roster-sort:hover{
+  color:#ead18b;
+}
+
+#roster-table .roster-sort:focus{
+  color:#ead18b;
+}
+
+
+/* Email links */
+
+#roster-table .roster-email{
+  color:var(--navy2);
+  font-weight:700;
+  text-decoration:none;
+}
+
+#roster-table .roster-email:hover{
+  color:#98721e;
+  text-decoration:underline;
+}
+
+
+/* Keep roster inside a clean frame */
+
+#roster-content .table-wrap{
+  border:1px solid var(--line);
+  border-radius:11px;
+  overflow:auto;
+  background:#fff;
+}
+
+
+/* Keep names from getting overly wide */
+
+#roster-table th:nth-child(1),
+#roster-table td:nth-child(1){
+  min-width:110px;
+}
+
+#roster-table th:nth-child(2),
+#roster-table td:nth-child(2){
+  min-width:105px;
+}
+
+#roster-table th:nth-child(3),
+#roster-table td:nth-child(3){
+  min-width:155px;
+}
+
+#roster-table th:nth-child(4),
+#roster-table td:nth-child(4){
+  min-width:150px;
+}
+
+#roster-table th:nth-child(5),
+#roster-table td:nth-child(5){
+  min-width:150px;
+}
+
+#roster-table th:nth-child(6),
+#roster-table td:nth-child(6){
+  min-width:125px;
+}
+
+#roster-table th:nth-child(7),
+#roster-table td:nth-child(7){
+  min-width:220px;
+}
