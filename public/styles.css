@@ -538,46 +538,189 @@ nav .admin-link{
 }
 
 /* =========================================================
-   ROSTER
+   MEMBER ROSTER - COMPACT TOOLBAR
 ========================================================= */
 
-.table-wrap{
-  overflow:auto;
-  border:1px solid var(--line);
-  border-radius:14px;
-  background:#fff;
+.roster-login-panel {
+  display: flex;
+  justify-content: center;
 }
 
-table{
-  border-collapse:collapse;
-  width:100%;
-  min-width:700px;
+.roster-login-card {
+  width: min(460px, 100%);
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  padding: 22px;
+  box-shadow: 0 8px 24px rgba(16,35,63,.07);
 }
 
-th,
-td{
-  padding:14px 16px;
-  text-align:left;
-  border-bottom:1px solid var(--line);
-  font-size:14px;
+.roster-login-card h3 {
+  margin: 0 0 6px;
+  color: var(--navy);
+  font-size: 22px;
 }
 
-th{
-  background:var(--navy);
-  color:#fff;
-  position:sticky;
-  top:0;
+.roster-login-card p {
+  color: var(--muted);
+  margin: 0 0 14px;
+  font-size: 14px;
 }
 
-tr:last-child td{
-  border-bottom:0;
+
+/* ---------- TOOLBAR ---------- */
+
+.roster-toolbar {
+  display: grid;
+  grid-template-columns: 2fr 3fr;
+  gap: 18px;
+  align-items: end;
+  margin: 0 0 14px;
 }
 
-#roster-meta{
-  color:var(--muted);
-  font-size:13px;
+
+/* ---------- SEARCH ---------- */
+
+.roster-search-wrap {
+  min-width: 0;
 }
 
+.roster-search-wrap label {
+  display: block;
+  margin: 0;
+  font-size: 12px;
+  font-weight: 750;
+  color: var(--navy);
+}
+
+.roster-search-wrap input {
+  width: 100%;
+  height: 38px;
+  margin: 4px 0 0;
+  padding: 7px 10px;
+  border: 1px solid #ccd3db;
+  border-radius: 7px;
+  font-size: 13px;
+}
+
+
+/* ---------- FILTERS ---------- */
+
+.roster-filters {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  align-items: end;
+}
+
+.roster-filters label {
+  display: block;
+  margin: 0;
+  min-width: 0;
+  font-size: 11px;
+  font-weight: 750;
+  color: var(--navy);
+}
+
+.roster-filters select {
+  width: 100%;
+  height: 38px;
+  margin: 4px 0 0;
+  padding: 6px 8px;
+  border: 1px solid #ccd3db;
+  border-radius: 7px;
+  background: #fff;
+  font-size: 12px;
+}
+
+
+/* ---------- RESULTS ---------- */
+
+.roster-results-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 4px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.roster-logout-btn {
+  background: #fff !important;
+  color: var(--navy) !important;
+  border: 1px solid var(--line) !important;
+  padding: 6px 10px;
+  font-size: 11px;
+}
+
+
+/* ---------- TABLE ---------- */
+
+#roster-table th {
+  white-space: nowrap;
+}
+
+#roster-table td {
+  vertical-align: middle;
+}
+
+.roster-sort {
+  appearance: none;
+  border: 0;
+  background: transparent;
+  color: #fff;
+  font: inherit;
+  font-weight: 750;
+  padding: 0;
+  cursor: pointer;
+  text-align: left;
+}
+
+.roster-sort:hover {
+  color: #ead18b;
+}
+
+.roster-email {
+  color: var(--navy2);
+  font-weight: 650;
+  text-decoration: none;
+}
+
+.roster-email:hover {
+  text-decoration: underline;
+}
+
+
+/* ---------- TABLET ---------- */
+
+@media (max-width: 950px) {
+
+  .roster-toolbar {
+    grid-template-columns: 1fr;
+  }
+
+  .roster-filters {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+}
+
+
+/* ---------- MOBILE ---------- */
+
+@media (max-width: 650px) {
+
+  .roster-filters {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .roster-results-bar {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+}
 
 /* =========================================================
    ABOUT
