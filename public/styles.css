@@ -1538,3 +1538,53 @@ a.member-resource-card:hover{
   }
 
 }
+/* =========================================================
+   MEMBER ROSTER COLLAPSE
+========================================================= */
+
+.member-roster-toggle-wrap{
+  margin:10px 0 20px;
+}
+
+.member-roster-toggle{
+  width:100%;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:20px;
+
+  background:var(--navy);
+  color:#fff;
+
+  border:0;
+  border-radius:12px;
+
+  padding:14px 18px;
+
+  font:inherit;
+  font-size:14px;
+  font-weight:800;
+
+  cursor:pointer;
+
+  transition:
+    background .2s ease,
+    transform .2s ease;
+}
+
+.member-roster-toggle:hover{
+  background:var(--navy2);
+}
+
+.member-roster-toggle:active{
+  transform:scale(.995);
+}
+
+.member-roster-toggle-arrow{
+  color:var(--gold);
+  font-size:14px;
+}
+
+.member-roster-section{
+  margin-top:0;
+}
