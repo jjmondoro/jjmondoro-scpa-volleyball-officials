@@ -1,5 +1,12 @@
+let rosterRows = [];
+let rosterFilteredRows = [];
+
+let rosterSortKey = "Last Name";
+let rosterSortDirection = "asc";
+
+
 /* =========================================================
-   TRAINING & RATING SESSIONS
+   TRAINING
 ========================================================= */
 
 async function loadTrainings() {
@@ -29,11 +36,14 @@ async function loadTrainings() {
 
     box.innerHTML = data.map(session => `
       <article class="training-card">
+
         <div class="training-type">
           ${escapeHtml(session.type)}
         </div>
 
-        <h3>${escapeHtml(session.title)}</h3>
+        <h3>
+          ${escapeHtml(session.title)}
+        </h3>
 
         <div class="training-date">
           ${formatDate(session.date)}
@@ -50,11 +60,12 @@ async function loadTrainings() {
             ? `<div class="training-description">${escapeHtml(session.description)}</div>`
             : ""
         }
+
       </article>
     `).join("");
 
   } catch (error) {
-    console.error("Training error:", error);
+    console.error(error);
 
     box.innerHTML = `
       <div class="loading">
@@ -66,7 +77,7 @@ async function loadTrainings() {
 
 
 /* =========================================================
-   CHAPTER MEETINGS
+   MEETINGS
 ========================================================= */
 
 async function loadMeetings() {
@@ -148,7 +159,7 @@ async function loadMeetings() {
     `).join("");
 
   } catch (error) {
-    console.error("Meeting error:", error);
+    console.error(error);
 
     box.innerHTML = `
       <div class="loading">
@@ -229,7 +240,7 @@ async function loadBoardMembers() {
     `).join("");
 
   } catch (error) {
-    console.error("Board member error:", error);
+    console.error(error);
 
     box.innerHTML = `
       <div class="loading">
@@ -241,24 +252,157 @@ async function loadBoardMembers() {
 
 
 /* =========================================================
-   ROSTER
+   ROSTER AUTH STATUS
+========================================================= */
+
+async function checkRosterStatus() {
+  try {
+    const response = await fetch("/api/roster/status");
+    const data = await response.json();
+
+    if (data.authenticated) {
+      showRoster();
+      await loadRoster();
+    } else {
+      showRosterLogin();
+    }
+
+  } catch (error) {
+    console.error(error);
+    showRosterLogin();
+  }
+}
+
+
+function showRosterLogin() {
+  document.getElementById("roster-login-panel").style.display = "block";
+  document.getElementById("roster-content").style.display = "none";
+}
+
+
+function showRoster() {
+  document.getElementById("roster-login-panel").style.display = "none";
+  document.getElementById("roster-content").style.display = "block";
+}
+
+
+/* =========================================================
+   ROSTER LOGIN
+========================================================= */
+
+document
+  .getElementById("roster-login-form")
+  .addEventListener("submit", async e => {
+
+    e.preventDefault();
+
+    const password =
+      document.getElementById("roster-password").value;
+
+    const message =
+      document.getElementById("roster-login-message");
+
+    message.textContent =
+      "Checking password...";
+
+    try {
+      const response =
+        await fetch("/api/roster/login", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            password
+          })
+        });
+
+      const result =
+        await response.json();
+
+      if (!response.ok) {
+        message.textContent =
+          result.error || "Unable to log in.";
+
+        return;
+      }
+
+      document.getElementById("roster-password").value = "";
+      message.textContent = "";
+
+      showRoster();
+      await loadRoster();
+
+    } catch (error) {
+      console.error(error);
+
+      message.textContent =
+        "Unable to communicate with the server.";
+    }
+  });
+
+
+/* =========================================================
+   ROSTER LOGOUT
+========================================================= */
+
+document
+  .getElementById("roster-logout")
+  .addEventListener("click", async () => {
+
+    try {
+      await fetch("/api/roster/logout", {
+        method: "POST"
+      });
+    } catch (error) {
+      console.error(error);
+    }
+
+    rosterRows = [];
+    rosterFilteredRows = [];
+
+    showRosterLogin();
+
+    document.getElementById("roster-meta").textContent = "";
+  });
+
+
+/* =========================================================
+   LOAD ROSTER
 ========================================================= */
 
 async function loadRoster() {
-  const table = document.getElementById("roster-table");
-  const meta = document.getElementById("roster-meta");
+  const table =
+    document.getElementById("roster-table");
 
-  if (!table) return;
+  const meta =
+    document.getElementById("roster-meta");
 
   try {
-    const response = await fetch("/api/roster");
-    const data = await response.json();
+    const response =
+      await fetch("/api/roster");
 
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to load roster.");
+    const data =
+      await response.json();
+
+    if (response.status === 401) {
+      showRosterLogin();
+      return;
     }
 
-    if (!data.rows || !data.rows.length) {
+    if (!response.ok) {
+      throw new Error(
+        data.error ||
+        "Unable to load roster."
+      );
+    }
+
+    rosterRows =
+      Array.isArray(data.rows)
+        ? data.rows
+        : [];
+
+    if (!rosterRows.length) {
       table.innerHTML = `
         <tbody>
           <tr>
@@ -269,44 +413,22 @@ async function loadRoster() {
         </tbody>
       `;
 
-      if (meta) {
-        meta.textContent = "";
-      }
+      meta.textContent = "";
 
       return;
     }
 
-    const headers = Object.keys(data.rows[0]);
+    meta.textContent =
+      `${rosterRows.length} officials • Updated ${
+        new Date(data.uploaded_at).toLocaleDateString()
+      }`;
 
-    table.innerHTML = `
-      <thead>
-        <tr>
-          ${headers.map(header => `
-            <th>${escapeHtml(header)}</th>
-          `).join("")}
-        </tr>
-      </thead>
+    populateRosterFilters();
 
-      <tbody>
-        ${data.rows.map(row => `
-          <tr>
-            ${headers.map(header => `
-              <td>${escapeHtml(row[header])}</td>
-            `).join("")}
-          </tr>
-        `).join("")}
-      </tbody>
-    `;
-
-    if (meta) {
-      meta.textContent =
-        `${data.rows.length} officials • Updated ${
-          new Date(data.uploaded_at).toLocaleDateString()
-        }`;
-    }
+    applyRosterFilters();
 
   } catch (error) {
-    console.error("Roster error:", error);
+    console.error(error);
 
     table.innerHTML = `
       <tbody>
@@ -322,14 +444,405 @@ async function loadRoster() {
 
 
 /* =========================================================
+   FILTERS
+========================================================= */
+
+function populateRosterFilters() {
+  populateSelect(
+    "filter-referee",
+    "Referee Certification"
+  );
+
+  populateSelect(
+    "filter-lj",
+    "LJ Certification"
+  );
+
+  populateSelect(
+    "filter-scorer",
+    "Scorer Certification"
+  );
+
+  populateSelect(
+    "filter-membership",
+    "Membership Type"
+  );
+}
+
+
+function populateSelect(
+  elementId,
+  propertyName
+) {
+  const select =
+    document.getElementById(elementId);
+
+  const currentValue =
+    select.value;
+
+  const values =
+    [...new Set(
+      rosterRows
+        .map(row =>
+          String(
+            row[propertyName] || ""
+          ).trim()
+        )
+        .filter(Boolean)
+    )]
+    .sort((a, b) =>
+      a.localeCompare(b)
+    );
+
+  select.innerHTML =
+    `<option value="">All</option>` +
+    values.map(value => `
+      <option value="${escapeAttribute(value)}">
+        ${escapeHtml(value)}
+      </option>
+    `).join("");
+
+  if (values.includes(currentValue)) {
+    select.value = currentValue;
+  }
+}
+
+
+function applyRosterFilters() {
+  const search =
+    document
+      .getElementById("roster-search")
+      .value
+      .trim()
+      .toLowerCase();
+
+  const referee =
+    document.getElementById("filter-referee").value;
+
+  const lj =
+    document.getElementById("filter-lj").value;
+
+  const scorer =
+    document.getElementById("filter-scorer").value;
+
+  const membership =
+    document.getElementById("filter-membership").value;
+
+
+  rosterFilteredRows =
+    rosterRows.filter(row => {
+
+      const searchable =
+        [
+          row["Last Name"],
+          row["First Name"],
+          row["Referee Certification"],
+          row["LJ Certification"],
+          row["Scorer Certification"],
+          row["Membership Type"],
+          row["Email Address"]
+        ]
+        .join(" ")
+        .toLowerCase();
+
+
+      if (
+        search &&
+        !searchable.includes(search)
+      ) {
+        return false;
+      }
+
+
+      if (
+        referee &&
+        row["Referee Certification"] !== referee
+      ) {
+        return false;
+      }
+
+
+      if (
+        lj &&
+        row["LJ Certification"] !== lj
+      ) {
+        return false;
+      }
+
+
+      if (
+        scorer &&
+        row["Scorer Certification"] !== scorer
+      ) {
+        return false;
+      }
+
+
+      if (
+        membership &&
+        row["Membership Type"] !== membership
+      ) {
+        return false;
+      }
+
+
+      return true;
+    });
+
+
+  sortRosterRows();
+
+  renderRoster();
+}
+
+
+/* =========================================================
+   SORTING
+========================================================= */
+
+function sortRosterRows() {
+  rosterFilteredRows.sort((a, b) => {
+
+    const aValue =
+      String(
+        a[rosterSortKey] || ""
+      );
+
+    const bValue =
+      String(
+        b[rosterSortKey] || ""
+      );
+
+
+    const result =
+      aValue.localeCompare(
+        bValue,
+        undefined,
+        {
+          numeric: true,
+          sensitivity: "base"
+        }
+      );
+
+
+    return rosterSortDirection === "asc"
+      ? result
+      : -result;
+  });
+}
+
+
+function changeRosterSort(key) {
+  if (rosterSortKey === key) {
+
+    rosterSortDirection =
+      rosterSortDirection === "asc"
+        ? "desc"
+        : "asc";
+
+  } else {
+
+    rosterSortKey = key;
+    rosterSortDirection = "asc";
+  }
+
+  sortRosterRows();
+  renderRoster();
+}
+
+
+/* =========================================================
+   RENDER ROSTER
+========================================================= */
+
+function renderRoster() {
+  const table =
+    document.getElementById("roster-table");
+
+  const count =
+    document.getElementById("roster-results-count");
+
+
+  count.textContent =
+    `${rosterFilteredRows.length} of ${rosterRows.length} officials`;
+
+
+  const columns = [
+    "Last Name",
+    "First Name",
+    "Referee Certification",
+    "LJ Certification",
+    "Scorer Certification",
+    "Membership Type",
+    "Email Address"
+  ];
+
+
+  if (!rosterFilteredRows.length) {
+    table.innerHTML = `
+      <thead>
+        ${buildRosterHeader(columns)}
+      </thead>
+
+      <tbody>
+        <tr>
+          <td colspan="${columns.length}" class="loading">
+            No officials match the current search or filters.
+          </td>
+        </tr>
+      </tbody>
+    `;
+
+    attachRosterSortListeners();
+
+    return;
+  }
+
+
+  table.innerHTML = `
+    <thead>
+      ${buildRosterHeader(columns)}
+    </thead>
+
+    <tbody>
+
+      ${rosterFilteredRows.map(row => `
+        <tr>
+
+          ${columns.map(column => {
+
+            if (
+              column === "Email Address" &&
+              row[column]
+            ) {
+
+              return `
+                <td>
+                  <a
+                    class="roster-email"
+                    href="mailto:${escapeAttribute(row[column])}"
+                  >
+                    ${escapeHtml(row[column])}
+                  </a>
+                </td>
+              `;
+            }
+
+            return `
+              <td>
+                ${escapeHtml(row[column] || "")}
+              </td>
+            `;
+
+          }).join("")}
+
+        </tr>
+      `).join("")}
+
+    </tbody>
+  `;
+
+
+  attachRosterSortListeners();
+}
+
+
+function buildRosterHeader(columns) {
+  return `
+    <tr>
+
+      ${columns.map(column => {
+
+        let arrow = "";
+
+        if (rosterSortKey === column) {
+          arrow =
+            rosterSortDirection === "asc"
+              ? " ▲"
+              : " ▼";
+        }
+
+        return `
+          <th>
+            <button
+              type="button"
+              class="roster-sort"
+              data-sort="${escapeAttribute(column)}"
+            >
+              ${escapeHtml(column)}${arrow}
+            </button>
+          </th>
+        `;
+
+      }).join("")}
+
+    </tr>
+  `;
+}
+
+
+function attachRosterSortListeners() {
+  document
+    .querySelectorAll(".roster-sort")
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        () => {
+          changeRosterSort(
+            button.dataset.sort
+          );
+        }
+      );
+
+    });
+}
+
+
+/* =========================================================
+   FILTER LISTENERS
+========================================================= */
+
+document
+  .getElementById("roster-search")
+  .addEventListener(
+    "input",
+    applyRosterFilters
+  );
+
+
+[
+  "filter-referee",
+  "filter-lj",
+  "filter-scorer",
+  "filter-membership"
+]
+.forEach(id => {
+
+  document
+    .getElementById(id)
+    .addEventListener(
+      "change",
+      applyRosterFilters
+    );
+
+});
+
+
+/* =========================================================
    HELPERS
 ========================================================= */
 
 function formatDate(value) {
   if (!value) return "";
 
-  const dateOnly = String(value).substring(0, 10);
-  const date = new Date(dateOnly + "T00:00:00");
+  const dateOnly =
+    String(value).substring(0, 10);
+
+  const date =
+    new Date(
+      dateOnly + "T00:00:00"
+    );
 
   return date.toLocaleDateString(
     undefined,
@@ -346,13 +859,19 @@ function formatDate(value) {
 function formatTime(value) {
   if (!value) return "";
 
-  const parts = String(value).split(":");
+  const parts =
+    String(value).split(":");
 
-  let hour = Number(parts[0]);
-  const minutes = parts[1] || "00";
+  let hour =
+    Number(parts[0]);
+
+  const minutes =
+    parts[1] || "00";
 
   const suffix =
-    hour >= 12 ? "PM" : "AM";
+    hour >= 12
+      ? "PM"
+      : "AM";
 
   hour =
     hour % 12 || 12;
@@ -366,7 +885,10 @@ function getInitials(name) {
     .trim()
     .split(/\s+/)
     .slice(0, 2)
-    .map(part => part.charAt(0).toUpperCase())
+    .map(
+      part =>
+        part.charAt(0).toUpperCase()
+    )
     .join("");
 }
 
@@ -392,10 +914,10 @@ function escapeAttribute(value) {
 
 
 /* =========================================================
-   START PUBLIC WEBSITE
+   START
 ========================================================= */
 
 loadTrainings();
 loadMeetings();
 loadBoardMembers();
-loadRoster();
+checkRosterStatus();
