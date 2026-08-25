@@ -16,16 +16,28 @@
 <header class="site-header">
   <div class="container nav">
 
-    <div class="brand">
-      <div class="brand-mark">SC</div>
+    <header class="site-header">
+
+  <div class="container nav">
+
+    <a class="brand brand-link" href="#home">
+
+      <div class="brand-mark">
+        SC
+      </div>
 
       <div>
         <strong>South Central PA</strong>
         <span>Chapter of Volleyball Officials</span>
       </div>
-    </div>
 
-    <nav>
+    </a>
+
+
+    <!-- DESKTOP NAVIGATION -->
+
+    <nav class="desktop-nav">
+
       <a href="#home">Home</a>
       <a href="#training">Training</a>
       <a href="#ratings">Ratings</a>
@@ -33,9 +45,51 @@
       <a href="#board">Board</a>
       <a href="#roster">Roster</a>
       <a href="#about">About</a>
+
     </nav>
 
+
+    <!-- MOBILE MENU BUTTON -->
+
+    <button
+      class="mobile-menu-button"
+      id="mobile-menu-button"
+      type="button"
+      aria-label="Open navigation menu"
+      aria-expanded="false"
+      aria-controls="mobile-menu"
+    >
+
+      <span></span>
+      <span></span>
+      <span></span>
+
+    </button>
+
   </div>
+
+
+  <!-- MOBILE NAVIGATION -->
+
+  <div
+    class="mobile-menu"
+    id="mobile-menu"
+  >
+
+    <div class="container mobile-menu-inner">
+
+      <a href="#home">Home</a>
+      <a href="#training">Training</a>
+      <a href="#ratings">Ratings</a>
+      <a href="#meetings">Meetings</a>
+      <a href="#board">Board Members</a>
+      <a href="#roster">Officials Roster</a>
+      <a href="#about">About</a>
+
+    </div>
+
+  </div>
+
 </header>
 
 
