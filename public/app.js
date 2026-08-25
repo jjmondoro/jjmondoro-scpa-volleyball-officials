@@ -4,67 +4,109 @@ let rosterFilteredRows = [];
 let rosterSortKey = "Last Name";
 let rosterSortDirection = "asc";
 
+let memberDocuments = [];
+let memberDocumentsLoaded = false;
+
 
 /* =========================================================
    TRAINING
 ========================================================= */
 
 async function loadTrainings() {
-  const box = document.getElementById("training-list");
+
+  const box =
+    document.getElementById("training-list");
+
   if (!box) return;
 
   try {
-    const response = await fetch("/api/trainings");
-    const data = await response.json();
+
+    const response =
+      await fetch("/api/trainings");
+
+    const data =
+      await response.json();
+
 
     if (!response.ok) {
-      throw new Error(data.error || "Unable to load sessions.");
+
+      throw new Error(
+        data.error ||
+        "Unable to load sessions."
+      );
+
     }
 
+
     if (!data.length) {
+
       box.innerHTML = `
         <div class="training-card">
-          <div class="training-type">Coming Soon</div>
-          <h3>Training Calendar</h3>
+
+          <div class="training-type">
+            Coming Soon
+          </div>
+
+          <h3>
+            Training Calendar
+          </h3>
+
           <p class="training-description">
-            Chapter training sessions and rating opportunities will be posted here.
+            Chapter training sessions and rating
+            opportunities will be posted here.
           </p>
+
         </div>
       `;
+
       return;
     }
 
-    box.innerHTML = data.map(session => `
-      <article class="training-card">
 
-        <div class="training-type">
-          ${escapeHtml(session.type)}
-        </div>
+    box.innerHTML =
+      data.map(session => `
 
-        <h3>
-          ${escapeHtml(session.title)}
-        </h3>
+        <article class="training-card">
 
-        <div class="training-date">
-          ${formatDate(session.date)}
-        </div>
+          <div class="training-type">
+            ${escapeHtml(session.type)}
+          </div>
 
-        ${
-          session.location
-            ? `<div class="training-location">${escapeHtml(session.location)}</div>`
-            : ""
-        }
+          <h3>
+            ${escapeHtml(session.title)}
+          </h3>
 
-        ${
-          session.description
-            ? `<div class="training-description">${escapeHtml(session.description)}</div>`
-            : ""
-        }
+          <div class="training-date">
+            ${formatDate(session.date)}
+          </div>
 
-      </article>
-    `).join("");
+          ${
+            session.location
+              ? `
+                <div class="training-location">
+                  ${escapeHtml(session.location)}
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            session.description
+              ? `
+                <div class="training-description">
+                  ${escapeHtml(session.description)}
+                </div>
+              `
+              : ""
+          }
+
+        </article>
+
+      `).join("");
+
 
   } catch (error) {
+
     console.error(error);
 
     box.innerHTML = `
@@ -72,7 +114,9 @@ async function loadTrainings() {
         Unable to load training sessions.
       </div>
     `;
+
   }
+
 }
 
 
@@ -81,84 +125,129 @@ async function loadTrainings() {
 ========================================================= */
 
 async function loadMeetings() {
-  const box = document.getElementById("meeting-list");
+
+  const box =
+    document.getElementById("meeting-list");
+
   if (!box) return;
 
+
   try {
-    const response = await fetch("/api/meetings");
-    const data = await response.json();
+
+    const response =
+      await fetch("/api/meetings");
+
+    const data =
+      await response.json();
+
 
     if (!response.ok) {
-      throw new Error(data.error || "Unable to load meetings.");
+
+      throw new Error(
+        data.error ||
+        "Unable to load meetings."
+      );
+
     }
 
+
     if (!data.length) {
+
       box.innerHTML = `
         <div class="training-card">
-          <div class="training-type">No Meetings Scheduled</div>
-          <h3>Chapter Meetings</h3>
+
+          <div class="training-type">
+            No Meetings Scheduled
+          </div>
+
+          <h3>
+            Chapter Meetings
+          </h3>
+
           <p class="training-description">
             Upcoming chapter meetings will be posted here.
           </p>
+
         </div>
       `;
+
       return;
     }
 
-    box.innerHTML = data.map(meeting => `
-      <article class="training-card meeting-card">
 
-        <div class="training-type">
-          Chapter Meeting
-        </div>
+    box.innerHTML =
+      data.map(meeting => `
 
-        <h3>
-          ${escapeHtml(meeting.title)}
-        </h3>
+        <article class="training-card meeting-card">
 
-        <div class="training-date">
-          ${formatDate(meeting.meeting_date)}
-        </div>
+          <div class="training-type">
+            Chapter Meeting
+          </div>
 
-        ${
-          meeting.meeting_time
-            ? `<div class="meeting-time">${formatTime(meeting.meeting_time)}</div>`
-            : ""
-        }
+          <h3>
+            ${escapeHtml(meeting.title)}
+          </h3>
 
-        ${
-          meeting.location
-            ? `<div class="training-location">${escapeHtml(meeting.location)}</div>`
-            : ""
-        }
+          <div class="training-date">
+            ${formatDate(meeting.meeting_date)}
+          </div>
 
-        ${
-          meeting.description
-            ? `<div class="training-description">${escapeHtml(meeting.description)}</div>`
-            : ""
-        }
+          ${
+            meeting.meeting_time
+              ? `
+                <div class="meeting-time">
+                  ${formatTime(meeting.meeting_time)}
+                </div>
+              `
+              : ""
+          }
 
-        ${
-          meeting.meeting_link
-            ? `
-              <div class="meeting-link-wrap">
-                <a
-                  class="btn primary meeting-link"
-                  href="${escapeAttribute(meeting.meeting_link)}"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  Join / View Meeting
-                </a>
-              </div>
-            `
-            : ""
-        }
+          ${
+            meeting.location
+              ? `
+                <div class="training-location">
+                  ${escapeHtml(meeting.location)}
+                </div>
+              `
+              : ""
+          }
 
-      </article>
-    `).join("");
+          ${
+            meeting.description
+              ? `
+                <div class="training-description">
+                  ${escapeHtml(meeting.description)}
+                </div>
+              `
+              : ""
+          }
+
+          ${
+            meeting.meeting_link
+              ? `
+                <div class="meeting-link-wrap">
+
+                  <a
+                    class="btn primary meeting-link"
+                    href="${escapeAttribute(meeting.meeting_link)}"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    Join / View Meeting
+                  </a>
+
+                </div>
+              `
+              : ""
+          }
+
+        </article>
+
+      `).join("");
+
 
   } catch (error) {
+
     console.error(error);
 
     box.innerHTML = `
@@ -166,7 +255,9 @@ async function loadMeetings() {
         Unable to load chapter meetings.
       </div>
     `;
+
   }
+
 }
 
 
@@ -175,71 +266,99 @@ async function loadMeetings() {
 ========================================================= */
 
 async function loadBoardMembers() {
-  const box = document.getElementById("board-list");
+
+  const box =
+    document.getElementById("board-list");
+
   if (!box) return;
 
+
   try {
-    const response = await fetch("/api/board-members");
-    const data = await response.json();
+
+    const response =
+      await fetch("/api/board-members");
+
+    const data =
+      await response.json();
+
 
     if (!response.ok) {
-      throw new Error(data.error || "Unable to load board members.");
+
+      throw new Error(
+        data.error ||
+        "Unable to load board members."
+      );
+
     }
 
+
     if (!data.length) {
+
       box.innerHTML = `
         <div class="board-empty">
           Board member information will be added soon.
         </div>
       `;
+
       return;
     }
 
-    box.innerHTML = data.map(member => `
-      <article class="board-card">
 
-        <div class="board-photo-wrap">
+    box.innerHTML =
+      data.map(member => `
 
-          ${
-            member.photo_url
-              ? `
-                <img
-                  class="board-photo"
-                  src="${escapeAttribute(member.photo_url)}"
-                  alt="${escapeAttribute(member.name)}"
-                >
-              `
-              : `
-                <div class="board-photo board-photo-placeholder">
-                  ${getInitials(member.name)}
-                </div>
-              `
-          }
+        <article class="board-card">
 
-        </div>
+          <div class="board-photo-wrap">
 
-        <div class="board-card-content">
+            ${
+              member.photo_url
+                ? `
+                  <img
+                    class="board-photo"
+                    src="${escapeAttribute(member.photo_url)}"
+                    alt="${escapeAttribute(member.name)}"
+                  >
+                `
+                : `
+                  <div class="board-photo board-photo-placeholder">
+                    ${getInitials(member.name)}
+                  </div>
+                `
+            }
 
-          <h3>
-            ${escapeHtml(member.name)}
-          </h3>
-
-          <div class="board-position">
-            ${escapeHtml(member.position_title)}
           </div>
 
-          ${
-            member.description
-              ? `<p>${escapeHtml(member.description)}</p>`
-              : ""
-          }
 
-        </div>
+          <div class="board-card-content">
 
-      </article>
-    `).join("");
+            <h3>
+              ${escapeHtml(member.name)}
+            </h3>
+
+            <div class="board-position">
+              ${escapeHtml(member.position_title)}
+            </div>
+
+            ${
+              member.description
+                ? `
+                  <p>
+                    ${escapeHtml(member.description)}
+                  </p>
+                `
+                : ""
+            }
+
+          </div>
+
+        </article>
+
+      `).join("");
+
 
   } catch (error) {
+
     console.error(error);
 
     box.innerHTML = `
@@ -247,124 +366,280 @@ async function loadBoardMembers() {
         Unable to load board members.
       </div>
     `;
+
   }
+
 }
 
 
 /* =========================================================
-   ROSTER AUTH STATUS
+   MEMBER AUTH STATUS
 ========================================================= */
 
 async function checkRosterStatus() {
+
   try {
-    const response = await fetch("/api/roster/status");
-    const data = await response.json();
+
+    const response =
+      await fetch("/api/roster/status");
+
+    const data =
+      await response.json();
+
 
     if (data.authenticated) {
+
       showRoster();
+
       await loadRoster();
+      await loadMemberDocuments();
+
     } else {
+
       showRosterLogin();
+
     }
 
+
   } catch (error) {
+
     console.error(error);
+
     showRosterLogin();
+
   }
+
 }
 
 
 function showRosterLogin() {
-  document.getElementById("roster-login-panel").style.display = "block";
-  document.getElementById("roster-content").style.display = "none";
+
+  const login =
+    document.getElementById(
+      "roster-login-panel"
+    );
+
+  const content =
+    document.getElementById(
+      "roster-content"
+    );
+
+
+  if (login) {
+    login.style.display =
+      "block";
+  }
+
+
+  if (content) {
+    content.style.display =
+      "none";
+  }
+
 }
 
 
 function showRoster() {
-  document.getElementById("roster-login-panel").style.display = "none";
-  document.getElementById("roster-content").style.display = "block";
+
+  const login =
+    document.getElementById(
+      "roster-login-panel"
+    );
+
+  const content =
+    document.getElementById(
+      "roster-content"
+    );
+
+
+  if (login) {
+    login.style.display =
+      "none";
+  }
+
+
+  if (content) {
+    content.style.display =
+      "block";
+  }
+
 }
 
 
 /* =========================================================
-   ROSTER LOGIN
+   MEMBER LOGIN
 ========================================================= */
 
-document
-  .getElementById("roster-login-form")
-  .addEventListener("submit", async e => {
+const rosterLoginForm =
+  document.getElementById(
+    "roster-login-form"
+  );
 
-    e.preventDefault();
 
-    const password =
-      document.getElementById("roster-password").value;
+if (rosterLoginForm) {
 
-    const message =
-      document.getElementById("roster-login-message");
+  rosterLoginForm.addEventListener(
+    "submit",
+    async event => {
 
-    message.textContent =
-      "Checking password...";
+      event.preventDefault();
 
-    try {
-      const response =
-        await fetch("/api/roster/login", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            password
-          })
-        });
 
-      const result =
-        await response.json();
+      const password =
+        document.getElementById(
+          "roster-password"
+        ).value;
 
-      if (!response.ok) {
-        message.textContent =
-          result.error || "Unable to log in.";
 
-        return;
-      }
+      const message =
+        document.getElementById(
+          "roster-login-message"
+        );
 
-      document.getElementById("roster-password").value = "";
-      message.textContent = "";
-
-      showRoster();
-      await loadRoster();
-
-    } catch (error) {
-      console.error(error);
 
       message.textContent =
-        "Unable to communicate with the server.";
+        "Checking password...";
+
+
+      try {
+
+        const response =
+          await fetch(
+            "/api/roster/login",
+            {
+              method: "POST",
+
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
+
+              body:
+                JSON.stringify({
+                  password
+                })
+            }
+          );
+
+
+        const result =
+          await response.json();
+
+
+        if (!response.ok) {
+
+          message.textContent =
+            result.error ||
+            "Unable to log in.";
+
+          return;
+        }
+
+
+        document.getElementById(
+          "roster-password"
+        ).value = "";
+
+
+        message.textContent =
+          "";
+
+
+        showRoster();
+
+        await loadRoster();
+
+        await loadMemberDocuments();
+
+
+      } catch (error) {
+
+        console.error(error);
+
+
+        message.textContent =
+          "Unable to communicate with the server.";
+
+      }
+
     }
-  });
+  );
+
+}
 
 
 /* =========================================================
-   ROSTER LOGOUT
+   MEMBER LOGOUT
 ========================================================= */
 
-document
-  .getElementById("roster-logout")
-  .addEventListener("click", async () => {
+const rosterLogout =
+  document.getElementById(
+    "roster-logout"
+  );
 
-    try {
-      await fetch("/api/roster/logout", {
-        method: "POST"
-      });
-    } catch (error) {
-      console.error(error);
+
+if (rosterLogout) {
+
+  rosterLogout.addEventListener(
+    "click",
+    async () => {
+
+      try {
+
+        await fetch(
+          "/api/roster/logout",
+          {
+            method: "POST"
+          }
+        );
+
+      } catch (error) {
+
+        console.error(error);
+
+      }
+
+
+      rosterRows = [];
+      rosterFilteredRows = [];
+
+      memberDocuments = [];
+      memberDocumentsLoaded = false;
+
+
+      setRosterOpen(false);
+
+      setDocumentsOpen(false);
+
+
+      const rosterMeta =
+        document.getElementById(
+          "roster-meta"
+        );
+
+
+      const documentsMeta =
+        document.getElementById(
+          "documents-meta"
+        );
+
+
+      if (rosterMeta) {
+        rosterMeta.textContent = "";
+      }
+
+
+      if (documentsMeta) {
+        documentsMeta.textContent = "";
+      }
+
+
+      showRosterLogin();
+
     }
+  );
 
-    rosterRows = [];
-    rosterFilteredRows = [];
-
-    showRosterLogin();
-
-    document.getElementById("roster-meta").textContent = "";
-  });
+}
 
 
 /* =========================================================
@@ -372,101 +647,156 @@ document
 ========================================================= */
 
 async function loadRoster() {
+
   const table =
-    document.getElementById("roster-table");
+    document.getElementById(
+      "roster-table"
+    );
+
 
   const meta =
-    document.getElementById("roster-meta");
+    document.getElementById(
+      "roster-meta"
+    );
+
+
+  if (!table) return;
+
 
   try {
+
     const response =
-      await fetch("/api/roster");
+      await fetch(
+        "/api/roster"
+      );
+
 
     const data =
       await response.json();
 
-    if (response.status === 401) {
+
+    if (
+      response.status === 401
+    ) {
+
       showRosterLogin();
+
       return;
     }
 
+
     if (!response.ok) {
+
       throw new Error(
         data.error ||
         "Unable to load roster."
       );
+
     }
+
 
     rosterRows =
       Array.isArray(data.rows)
         ? data.rows
         : [];
 
+
     if (!rosterRows.length) {
+
       table.innerHTML = `
         <tbody>
+
           <tr>
+
             <td class="loading">
               The chapter roster has not been uploaded yet.
             </td>
+
           </tr>
+
         </tbody>
       `;
 
-      meta.textContent = "";
+
+      if (meta) {
+        meta.textContent = "";
+      }
+
 
       return;
     }
 
-    meta.textContent =
-      `${rosterRows.length} officials • Updated ${
-        new Date(data.uploaded_at).toLocaleDateString()
-      }`;
+
+    if (meta) {
+
+      meta.textContent =
+        `${rosterRows.length} officials • Updated ${
+          new Date(
+            data.uploaded_at
+          ).toLocaleDateString()
+        }`;
+
+    }
+
 
     populateRosterFilters();
 
     applyRosterFilters();
 
+
   } catch (error) {
+
     console.error(error);
+
 
     table.innerHTML = `
       <tbody>
+
         <tr>
+
           <td class="loading">
             Unable to load the roster.
           </td>
+
         </tr>
+
       </tbody>
     `;
+
   }
+
 }
 
 
 /* =========================================================
-   FILTERS
+   ROSTER FILTERS
 ========================================================= */
 
 function populateRosterFilters() {
+
   populateSelect(
     "filter-referee",
     "Referee Certification"
   );
+
 
   populateSelect(
     "filter-lj",
     "LJ Certification"
   );
 
+
   populateSelect(
     "filter-scorer",
     "Scorer Certification"
   );
 
+
   populateSelect(
     "filter-membership",
     "Membership Type"
   );
+
 }
 
 
@@ -474,59 +804,102 @@ function populateSelect(
   elementId,
   propertyName
 ) {
+
   const select =
-    document.getElementById(elementId);
+    document.getElementById(
+      elementId
+    );
+
+
+  if (!select) return;
+
 
   const currentValue =
     select.value;
 
+
   const values =
-    [...new Set(
-      rosterRows
-        .map(row =>
-          String(
-            row[propertyName] || ""
-          ).trim()
-        )
-        .filter(Boolean)
-    )]
-    .sort((a, b) =>
-      a.localeCompare(b)
+    [
+      ...new Set(
+        rosterRows
+          .map(row =>
+            String(
+              row[propertyName] || ""
+            ).trim()
+          )
+          .filter(Boolean)
+      )
+    ]
+    .sort(
+      (a, b) =>
+        a.localeCompare(b)
     );
+
 
   select.innerHTML =
     `<option value="">All</option>` +
-    values.map(value => `
-      <option value="${escapeAttribute(value)}">
-        ${escapeHtml(value)}
-      </option>
-    `).join("");
 
-  if (values.includes(currentValue)) {
-    select.value = currentValue;
+    values
+      .map(value => `
+
+        <option
+          value="${escapeAttribute(value)}"
+        >
+          ${escapeHtml(value)}
+        </option>
+
+      `)
+      .join("");
+
+
+  if (
+    values.includes(
+      currentValue
+    )
+  ) {
+
+    select.value =
+      currentValue;
+
   }
+
 }
 
 
 function applyRosterFilters() {
+
   const search =
     document
-      .getElementById("roster-search")
+      .getElementById(
+        "roster-search"
+      )
       .value
       .trim()
       .toLowerCase();
 
+
   const referee =
-    document.getElementById("filter-referee").value;
+    document.getElementById(
+      "filter-referee"
+    ).value;
+
 
   const lj =
-    document.getElementById("filter-lj").value;
+    document.getElementById(
+      "filter-lj"
+    ).value;
+
 
   const scorer =
-    document.getElementById("filter-scorer").value;
+    document.getElementById(
+      "filter-scorer"
+    ).value;
+
 
   const membership =
-    document.getElementById("filter-membership").value;
+    document.getElementById(
+      "filter-membership"
+    ).value;
 
 
   rosterFilteredRows =
@@ -548,74 +921,107 @@ function applyRosterFilters() {
 
       if (
         search &&
-        !searchable.includes(search)
+        !searchable.includes(
+          search
+        )
       ) {
+
         return false;
+
       }
 
 
       if (
         referee &&
-        row["Referee Certification"] !== referee
+        row["Referee Certification"] !==
+          referee
       ) {
+
         return false;
+
       }
 
 
       if (
         lj &&
-        row["LJ Certification"] !== lj
+        row["LJ Certification"] !==
+          lj
       ) {
+
         return false;
+
       }
 
 
       if (
         scorer &&
-        row["Scorer Certification"] !== scorer
+        row["Scorer Certification"] !==
+          scorer
       ) {
+
         return false;
+
       }
 
 
       if (
         membership &&
-        row["Membership Type"] !== membership
+        row["Membership Type"] !==
+          membership
       ) {
+
         return false;
+
       }
 
 
       return true;
+
     });
 
 
   sortRosterRows();
 
   renderRoster();
+
 }
+
+
 /* =========================================================
-   MEMBER ROSTER COLLAPSE
+   ROSTER COLLAPSE
 ========================================================= */
 
 const memberRosterToggle =
-  document.getElementById("member-roster-toggle");
+  document.getElementById(
+    "member-roster-toggle"
+  );
+
 
 const memberRosterSection =
-  document.getElementById("member-roster");
+  document.getElementById(
+    "member-roster"
+  );
+
 
 const openRosterCard =
-  document.getElementById("open-roster-card");
+  document.getElementById(
+    "open-roster-card"
+  );
 
 
-function setRosterOpen(isOpen) {
+function setRosterOpen(
+  isOpen
+) {
 
   if (!memberRosterSection) {
     return;
   }
 
+
   memberRosterSection.style.display =
-    isOpen ? "block" : "none";
+    isOpen
+      ? "block"
+      : "none";
 
 
   if (memberRosterToggle) {
@@ -625,10 +1031,12 @@ function setRosterOpen(isOpen) {
       String(isOpen)
     );
 
+
     const label =
       memberRosterToggle.querySelector(
         "span:first-child"
       );
+
 
     const arrow =
       memberRosterToggle.querySelector(
@@ -637,16 +1045,22 @@ function setRosterOpen(isOpen) {
 
 
     if (label) {
+
       label.textContent =
         isOpen
           ? "Hide Officials Roster"
           : "Show Officials Roster";
+
     }
 
 
     if (arrow) {
+
       arrow.textContent =
-        isOpen ? "▲" : "▼";
+        isOpen
+          ? "▲"
+          : "▼";
+
     }
 
   }
@@ -664,9 +1078,14 @@ if (
     () => {
 
       const isCurrentlyOpen =
-        memberRosterSection.style.display !== "none";
+        memberRosterSection
+          .style
+          .display !== "none";
 
-      setRosterOpen(!isCurrentlyOpen);
+
+      setRosterOpen(
+        !isCurrentlyOpen
+      );
 
     }
   );
@@ -685,75 +1104,842 @@ if (
 
       event.preventDefault();
 
+
       setRosterOpen(true);
 
 
-      setTimeout(() => {
+      setTimeout(
+        () => {
 
-        memberRosterSection.scrollIntoView({
-          behavior: "smooth",
-          block: "start"
-        });
+          memberRosterSection
+            .scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
 
-      }, 100);
+        },
+        100
+      );
 
     }
   );
 
 }
 
+
 /* =========================================================
-   SORTING
+   MEMBER DOCUMENTS
 ========================================================= */
 
-function sortRosterRows() {
-  rosterFilteredRows.sort((a, b) => {
+const memberDocumentsToggle =
+  document.getElementById(
+    "member-documents-toggle"
+  );
 
-    const aValue =
-      String(
-        a[rosterSortKey] || ""
+
+const memberDocumentsSection =
+  document.getElementById(
+    "member-documents"
+  );
+
+
+const openDocumentsCard =
+  document.getElementById(
+    "open-documents-card"
+  );
+
+
+function setDocumentsOpen(
+  isOpen
+) {
+
+  if (!memberDocumentsSection) {
+    return;
+  }
+
+
+  memberDocumentsSection.style.display =
+    isOpen
+      ? "block"
+      : "none";
+
+
+  if (memberDocumentsToggle) {
+
+    memberDocumentsToggle.setAttribute(
+      "aria-expanded",
+      String(isOpen)
+    );
+
+
+    const label =
+      memberDocumentsToggle.querySelector(
+        "span:first-child"
       );
 
-    const bValue =
-      String(
-        b[rosterSortKey] || ""
+
+    const arrow =
+      memberDocumentsToggle.querySelector(
+        ".member-documents-toggle-arrow"
       );
 
 
-    const result =
-      aValue.localeCompare(
-        bValue,
-        undefined,
-        {
-          numeric: true,
-          sensitivity: "base"
-        }
-      );
+    if (label) {
+
+      label.textContent =
+        isOpen
+          ? "Hide Chapter Documents"
+          : "Show Chapter Documents";
+
+    }
 
 
-    return rosterSortDirection === "asc"
-      ? result
-      : -result;
-  });
+    if (arrow) {
+
+      arrow.textContent =
+        isOpen
+          ? "▲"
+          : "▼";
+
+    }
+
+  }
+
+
+  if (
+    isOpen &&
+    !memberDocumentsLoaded
+  ) {
+
+    loadMemberDocuments();
+
+  }
+
 }
 
 
-function changeRosterSort(key) {
-  if (rosterSortKey === key) {
+/* =========================================================
+   DOCUMENT TOGGLE BUTTON
+========================================================= */
+
+if (
+  memberDocumentsToggle &&
+  memberDocumentsSection
+) {
+
+  memberDocumentsToggle.addEventListener(
+    "click",
+    () => {
+
+      const isCurrentlyOpen =
+        memberDocumentsSection
+          .style
+          .display !== "none";
+
+
+      setDocumentsOpen(
+        !isCurrentlyOpen
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   DOCUMENT RESOURCE CARD
+========================================================= */
+
+if (
+  openDocumentsCard &&
+  memberDocumentsSection
+) {
+
+  openDocumentsCard.addEventListener(
+    "click",
+    event => {
+
+      event.preventDefault();
+
+
+      setDocumentsOpen(true);
+
+
+      setTimeout(
+        () => {
+
+          memberDocumentsSection
+            .scrollIntoView({
+              behavior: "smooth",
+              block: "start"
+            });
+
+        },
+        100
+      );
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   LOAD MEMBER DOCUMENTS
+========================================================= */
+
+async function loadMemberDocuments() {
+
+  const list =
+    document.getElementById(
+      "documents-list"
+    );
+
+
+  const meta =
+    document.getElementById(
+      "documents-meta"
+    );
+
+
+  if (!list) return;
+
+
+  list.innerHTML = `
+    <div class="loading">
+      Loading chapter documents...
+    </div>
+  `;
+
+
+  try {
+
+    const response =
+      await fetch(
+        "/api/documents"
+      );
+
+
+    const data =
+      await response.json();
+
+
+    if (
+      response.status === 401
+    ) {
+
+      memberDocuments = [];
+
+      memberDocumentsLoaded =
+        false;
+
+
+      showRosterLogin();
+
+      return;
+
+    }
+
+
+    if (!response.ok) {
+
+      throw new Error(
+        data.error ||
+        "Unable to load member documents."
+      );
+
+    }
+
+
+    memberDocuments =
+      Array.isArray(data)
+        ? data
+        : (
+            Array.isArray(
+              data.documents
+            )
+              ? data.documents
+              : []
+          );
+
+
+    memberDocumentsLoaded =
+      true;
+
+
+    if (meta) {
+
+      meta.textContent =
+        `${memberDocuments.length} document${
+          memberDocuments.length === 1
+            ? ""
+            : "s"
+        }`;
+
+    }
+
+
+    populateDocumentCategories();
+
+    renderMemberDocuments();
+
+
+  } catch (error) {
+
+    console.error(error);
+
+
+    memberDocumentsLoaded =
+      false;
+
+
+    list.innerHTML = `
+      <div class="loading">
+        Unable to load chapter documents.
+      </div>
+    `;
+
+  }
+
+}
+
+
+/* =========================================================
+   DOCUMENT CATEGORY FILTER
+========================================================= */
+
+function populateDocumentCategories() {
+
+  const select =
+    document.getElementById(
+      "documents-category"
+    );
+
+
+  if (!select) return;
+
+
+  const currentValue =
+    select.value;
+
+
+  const categories =
+    [
+      ...new Set(
+        memberDocuments
+          .map(documentItem =>
+            String(
+              documentItem.category || ""
+            ).trim()
+          )
+          .filter(Boolean)
+      )
+    ]
+    .sort(
+      (a, b) =>
+        a.localeCompare(b)
+    );
+
+
+  select.innerHTML =
+    `
+      <option value="">
+        All Categories
+      </option>
+    ` +
+
+    categories
+      .map(category => `
+
+        <option
+          value="${escapeAttribute(category)}"
+        >
+          ${escapeHtml(category)}
+        </option>
+
+      `)
+      .join("");
+
+
+  if (
+    categories.includes(
+      currentValue
+    )
+  ) {
+
+    select.value =
+      currentValue;
+
+  }
+
+}
+
+
+/* =========================================================
+   FILTER DOCUMENTS
+========================================================= */
+
+function filteredMemberDocuments() {
+
+  const searchBox =
+    document.getElementById(
+      "documents-search"
+    );
+
+
+  const categoryBox =
+    document.getElementById(
+      "documents-category"
+    );
+
+
+  const search =
+    searchBox
+      ? searchBox
+          .value
+          .trim()
+          .toLowerCase()
+      : "";
+
+
+  const category =
+    categoryBox
+      ? categoryBox.value
+      : "";
+
+
+  return memberDocuments.filter(
+    documentItem => {
+
+      const searchable =
+        [
+          documentItem.title,
+          documentItem.category,
+          documentItem.description,
+          documentItem.filename
+        ]
+        .join(" ")
+        .toLowerCase();
+
+
+      if (
+        search &&
+        !searchable.includes(
+          search
+        )
+      ) {
+
+        return false;
+
+      }
+
+
+      if (
+        category &&
+        String(
+          documentItem.category || ""
+        ) !== category
+      ) {
+
+        return false;
+
+      }
+
+
+      return true;
+
+    }
+  );
+
+}
+
+
+/* =========================================================
+   DOCUMENT FILE TYPE
+========================================================= */
+
+function documentFileType(
+  filename
+) {
+
+  const match =
+    String(
+      filename || ""
+    )
+    .toLowerCase()
+    .match(
+      /\.([a-z0-9]+)$/
+    );
+
+
+  if (!match) {
+    return "FILE";
+  }
+
+
+  return match[1]
+    .toUpperCase();
+
+}
+
+
+/* =========================================================
+   RENDER MEMBER DOCUMENTS
+========================================================= */
+
+function renderMemberDocuments() {
+
+  const list =
+    document.getElementById(
+      "documents-list"
+    );
+
+
+  if (!list) return;
+
+
+  const documents =
+    filteredMemberDocuments();
+
+
+  if (!documents.length) {
+
+    list.innerHTML = `
+      <div class="documents-empty">
+
+        ${
+          memberDocuments.length
+            ? "No documents match the current search or category."
+            : "No member documents have been posted yet."
+        }
+
+      </div>
+    `;
+
+
+    return;
+
+  }
+
+
+  list.innerHTML =
+    documents
+      .map(documentItem => `
+
+        <article class="document-card">
+
+          <div class="document-card-top">
+
+            <div class="document-file-type">
+              ${
+                escapeHtml(
+                  documentFileType(
+                    documentItem.filename
+                  )
+                )
+              }
+            </div>
+
+            <div class="document-category">
+              ${
+                escapeHtml(
+                  documentItem.category ||
+                  "Chapter Document"
+                )
+              }
+            </div>
+
+          </div>
+
+
+          <h4>
+            ${
+              escapeHtml(
+                documentItem.title ||
+                documentItem.filename ||
+                "Chapter Document"
+              )
+            }
+          </h4>
+
+
+          ${
+            documentItem.description
+              ? `
+                <p>
+                  ${
+                    escapeHtml(
+                      documentItem.description
+                    )
+                  }
+                </p>
+              `
+              : ""
+          }
+
+
+          ${
+            documentItem.filename
+              ? `
+                <div class="document-filename">
+                  ${
+                    escapeHtml(
+                      documentItem.filename
+                    )
+                  }
+                </div>
+              `
+              : ""
+          }
+
+
+          <button
+            type="button"
+            class="btn primary document-download"
+            data-document-id="${
+              escapeAttribute(
+                documentItem.id
+              )
+            }"
+          >
+            View / Download
+          </button>
+
+        </article>
+
+      `)
+      .join("");
+
+
+  attachDocumentDownloadListeners();
+
+}
+
+
+/* =========================================================
+   SECURE DOCUMENT DOWNLOAD
+========================================================= */
+
+function attachDocumentDownloadListeners() {
+
+  document
+    .querySelectorAll(
+      ".document-download"
+    )
+    .forEach(button => {
+
+      button.addEventListener(
+        "click",
+        async () => {
+
+          const documentId =
+            button.dataset.documentId;
+
+
+          const originalText =
+            button.textContent;
+
+
+          button.disabled =
+            true;
+
+
+          button.textContent =
+            "Opening...";
+
+
+          try {
+
+            const response =
+              await fetch(
+                `/api/documents/${encodeURIComponent(documentId)}/download`
+              );
+
+
+            const result =
+              await response.json();
+
+
+            if (
+              response.status === 401
+            ) {
+
+              showRosterLogin();
+
+              return;
+
+            }
+
+
+            if (!response.ok) {
+
+              throw new Error(
+                result.error ||
+                "Unable to open document."
+              );
+
+            }
+
+
+            if (!result.url) {
+
+              throw new Error(
+                "Document URL was not returned."
+              );
+
+            }
+
+
+            window.open(
+              result.url,
+              "_blank",
+              "noopener,noreferrer"
+            );
+
+
+          } catch (error) {
+
+            console.error(error);
+
+
+            alert(
+              error.message ||
+              "Unable to open this document."
+            );
+
+
+          } finally {
+
+            button.disabled =
+              false;
+
+
+            button.textContent =
+              originalText;
+
+          }
+
+        }
+      );
+
+    });
+
+}
+
+
+/* =========================================================
+   DOCUMENT SEARCH LISTENERS
+========================================================= */
+
+const documentsSearch =
+  document.getElementById(
+    "documents-search"
+  );
+
+
+if (documentsSearch) {
+
+  documentsSearch.addEventListener(
+    "input",
+    renderMemberDocuments
+  );
+
+}
+
+
+const documentsCategory =
+  document.getElementById(
+    "documents-category"
+  );
+
+
+if (documentsCategory) {
+
+  documentsCategory.addEventListener(
+    "change",
+    renderMemberDocuments
+  );
+
+}
+
+
+/* =========================================================
+   ROSTER SORTING
+========================================================= */
+
+function sortRosterRows() {
+
+  rosterFilteredRows.sort(
+    (a, b) => {
+
+      const aValue =
+        String(
+          a[rosterSortKey] || ""
+        );
+
+
+      const bValue =
+        String(
+          b[rosterSortKey] || ""
+        );
+
+
+      const result =
+        aValue.localeCompare(
+          bValue,
+          undefined,
+          {
+            numeric: true,
+            sensitivity: "base"
+          }
+        );
+
+
+      return (
+        rosterSortDirection ===
+        "asc"
+      )
+        ? result
+        : -result;
+
+    }
+  );
+
+}
+
+
+function changeRosterSort(
+  key
+) {
+
+  if (
+    rosterSortKey ===
+    key
+  ) {
 
     rosterSortDirection =
-      rosterSortDirection === "asc"
+      rosterSortDirection ===
+      "asc"
         ? "desc"
         : "asc";
 
   } else {
 
-    rosterSortKey = key;
-    rosterSortDirection = "asc";
+    rosterSortKey =
+      key;
+
+
+    rosterSortDirection =
+      "asc";
+
   }
 
+
   sortRosterRows();
+
   renderRoster();
+
 }
 
 
@@ -762,11 +1948,27 @@ function changeRosterSort(key) {
 ========================================================= */
 
 function renderRoster() {
+
   const table =
-    document.getElementById("roster-table");
+    document.getElementById(
+      "roster-table"
+    );
+
 
   const count =
-    document.getElementById("roster-results-count");
+    document.getElementById(
+      "roster-results-count"
+    );
+
+
+  if (
+    !table ||
+    !count
+  ) {
+
+    return;
+
+  }
 
 
   count.textContent =
@@ -774,147 +1976,251 @@ function renderRoster() {
 
 
   const columns = [
+
     "Last Name",
+
     "First Name",
+
     "Referee Certification",
+
     "LJ Certification",
+
     "Scorer Certification",
+
     "Membership Type",
+
     "Email Address"
+
   ];
 
 
-  if (!rosterFilteredRows.length) {
+  if (
+    !rosterFilteredRows.length
+  ) {
+
     table.innerHTML = `
       <thead>
-        ${buildRosterHeader(columns)}
+
+        ${
+          buildRosterHeader(
+            columns
+          )
+        }
+
       </thead>
 
+
       <tbody>
+
         <tr>
-          <td colspan="${columns.length}" class="loading">
+
+          <td
+            colspan="${columns.length}"
+            class="loading"
+          >
             No officials match the current search or filters.
           </td>
+
         </tr>
+
       </tbody>
     `;
 
+
     attachRosterSortListeners();
 
+
     return;
+
   }
 
 
   table.innerHTML = `
     <thead>
-      ${buildRosterHeader(columns)}
+
+      ${
+        buildRosterHeader(
+          columns
+        )
+      }
+
     </thead>
+
 
     <tbody>
 
-      ${rosterFilteredRows.map(row => `
-        <tr>
+      ${
+        rosterFilteredRows
+          .map(row => `
 
-          ${columns.map(column => {
+            <tr>
 
-            if (
-              column === "Email Address" &&
-              row[column]
-            ) {
+              ${
+                columns
+                  .map(column => {
 
-              return `
-                <td>
-                  <a
-                    class="roster-email"
-                    href="mailto:${escapeAttribute(row[column])}"
-                  >
-                    ${escapeHtml(row[column])}
-                  </a>
-                </td>
-              `;
-            }
+                    if (
+                      column ===
+                        "Email Address" &&
+                      row[column]
+                    ) {
 
-            return `
-              <td>
-                ${escapeHtml(row[column] || "")}
-              </td>
-            `;
+                      return `
+                        <td>
 
-          }).join("")}
+                          <a
+                            class="roster-email"
+                            href="mailto:${
+                              escapeAttribute(
+                                row[column]
+                              )
+                            }"
+                          >
+                            ${
+                              escapeHtml(
+                                row[column]
+                              )
+                            }
+                          </a>
 
-        </tr>
-      `).join("")}
+                        </td>
+                      `;
+
+                    }
+
+
+                    return `
+                      <td>
+                        ${
+                          escapeHtml(
+                            row[column] || ""
+                          )
+                        }
+                      </td>
+                    `;
+
+                  })
+                  .join("")
+              }
+
+            </tr>
+
+          `)
+          .join("")
+      }
 
     </tbody>
   `;
 
 
   attachRosterSortListeners();
+
 }
 
 
-function buildRosterHeader(columns) {
+function buildRosterHeader(
+  columns
+) {
+
   return `
     <tr>
 
-      ${columns.map(column => {
+      ${
+        columns
+          .map(column => {
 
-        let arrow = "";
+            let arrow =
+              "";
 
-        if (rosterSortKey === column) {
-          arrow =
-            rosterSortDirection === "asc"
-              ? " ▲"
-              : " ▼";
-        }
 
-        return `
-          <th>
-            <button
-              type="button"
-              class="roster-sort"
-              data-sort="${escapeAttribute(column)}"
-            >
-              ${escapeHtml(column)}${arrow}
-            </button>
-          </th>
-        `;
+            if (
+              rosterSortKey ===
+              column
+            ) {
 
-      }).join("")}
+              arrow =
+                rosterSortDirection ===
+                "asc"
+                  ? " ▲"
+                  : " ▼";
+
+            }
+
+
+            return `
+              <th>
+
+                <button
+                  type="button"
+                  class="roster-sort"
+                  data-sort="${
+                    escapeAttribute(
+                      column
+                    )
+                  }"
+                >
+                  ${
+                    escapeHtml(
+                      column
+                    )
+                  }${arrow}
+                </button>
+
+              </th>
+            `;
+
+          })
+          .join("")
+      }
 
     </tr>
   `;
+
 }
 
 
 function attachRosterSortListeners() {
+
   document
-    .querySelectorAll(".roster-sort")
+    .querySelectorAll(
+      ".roster-sort"
+    )
     .forEach(button => {
 
       button.addEventListener(
         "click",
         () => {
+
           changeRosterSort(
             button.dataset.sort
           );
+
         }
       );
 
     });
+
 }
 
 
 /* =========================================================
-   FILTER LISTENERS
+   ROSTER FILTER LISTENERS
 ========================================================= */
 
-document
-  .getElementById("roster-search")
-  .addEventListener(
+const rosterSearch =
+  document.getElementById(
+    "roster-search"
+  );
+
+
+if (rosterSearch) {
+
+  rosterSearch.addEventListener(
     "input",
     applyRosterFilters
   );
+
+}
 
 
 [
@@ -925,12 +2231,20 @@ document
 ]
 .forEach(id => {
 
-  document
-    .getElementById(id)
-    .addEventListener(
+  const element =
+    document.getElementById(
+      id
+    );
+
+
+  if (element) {
+
+    element.addEventListener(
       "change",
       applyRosterFilters
     );
+
+  }
 
 });
 
@@ -939,16 +2253,29 @@ document
    HELPERS
 ========================================================= */
 
-function formatDate(value) {
-  if (!value) return "";
+function formatDate(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
 
   const dateOnly =
-    String(value).substring(0, 10);
+    String(value)
+      .substring(
+        0,
+        10
+      );
+
 
   const date =
     new Date(
-      dateOnly + "T00:00:00"
+      dateOnly +
+      "T00:00:00"
     );
+
 
   return date.toLocaleDateString(
     undefined,
@@ -959,89 +2286,153 @@ function formatDate(value) {
       year: "numeric"
     }
   );
+
 }
 
 
-function formatTime(value) {
-  if (!value) return "";
+function formatTime(
+  value
+) {
+
+  if (!value) {
+    return "";
+  }
+
 
   const parts =
-    String(value).split(":");
+    String(value)
+      .split(":");
+
 
   let hour =
-    Number(parts[0]);
+    Number(
+      parts[0]
+    );
+
 
   const minutes =
-    parts[1] || "00";
+    parts[1] ||
+    "00";
+
 
   const suffix =
     hour >= 12
       ? "PM"
       : "AM";
 
+
   hour =
-    hour % 12 || 12;
+    hour % 12 ||
+    12;
+
 
   return `${hour}:${minutes} ${suffix}`;
+
 }
 
 
-function getInitials(name) {
-  return String(name || "")
+function getInitials(
+  name
+) {
+
+  return String(
+    name || ""
+  )
     .trim()
     .split(/\s+/)
-    .slice(0, 2)
+    .slice(
+      0,
+      2
+    )
     .map(
       part =>
-        part.charAt(0).toUpperCase()
+        part
+          .charAt(0)
+          .toUpperCase()
     )
     .join("");
+
 }
 
 
-function escapeHtml(value) {
-  return String(value ?? "")
+function escapeHtml(
+  value
+) {
+
+  return String(
+    value ?? ""
+  )
     .replace(
       /[&<>"']/g,
       character => ({
+
         "&": "&amp;",
+
         "<": "&lt;",
+
         ">": "&gt;",
+
         '"': "&quot;",
+
         "'": "&#039;"
+
       }[character])
     );
+
 }
 
 
-function escapeAttribute(value) {
-  return escapeHtml(value);
+function escapeAttribute(
+  value
+) {
+
+  return escapeHtml(
+    value
+  );
+
 }
+
 
 /* =========================================================
    MOBILE NAVIGATION
 ========================================================= */
 
 const mobileMenuButton =
-  document.getElementById("mobile-menu-button");
+  document.getElementById(
+    "mobile-menu-button"
+  );
+
 
 const mobileMenu =
-  document.getElementById("mobile-menu");
+  document.getElementById(
+    "mobile-menu"
+  );
 
 
-if (mobileMenuButton && mobileMenu) {
+if (
+  mobileMenuButton &&
+  mobileMenu
+) {
 
   mobileMenuButton.addEventListener(
     "click",
     () => {
 
       const isOpen =
-        mobileMenu.classList.toggle("open");
+        mobileMenu
+          .classList
+          .toggle(
+            "open"
+          );
 
-      mobileMenuButton.classList.toggle(
-        "open",
-        isOpen
-      );
+
+      mobileMenuButton
+        .classList
+        .toggle(
+          "open",
+          isOpen
+        );
+
 
       mobileMenuButton.setAttribute(
         "aria-expanded",
@@ -1052,19 +2443,29 @@ if (mobileMenuButton && mobileMenu) {
   );
 
 
-  /* Close menu after selecting a page section */
-
   mobileMenu
-    .querySelectorAll("a")
+    .querySelectorAll(
+      "a"
+    )
     .forEach(link => {
 
       link.addEventListener(
         "click",
         () => {
 
-          mobileMenu.classList.remove("open");
+          mobileMenu
+            .classList
+            .remove(
+              "open"
+            );
 
-          mobileMenuButton.classList.remove("open");
+
+          mobileMenuButton
+            .classList
+            .remove(
+              "open"
+            );
+
 
           mobileMenuButton.setAttribute(
             "aria-expanded",
@@ -1077,20 +2478,33 @@ if (mobileMenuButton && mobileMenu) {
     });
 
 
-  /* Close menu with Escape key */
-
   document.addEventListener(
     "keydown",
     event => {
 
       if (
-        event.key === "Escape" &&
-        mobileMenu.classList.contains("open")
+        event.key ===
+          "Escape" &&
+        mobileMenu
+          .classList
+          .contains(
+            "open"
+          )
       ) {
 
-        mobileMenu.classList.remove("open");
+        mobileMenu
+          .classList
+          .remove(
+            "open"
+          );
 
-        mobileMenuButton.classList.remove("open");
+
+        mobileMenuButton
+          .classList
+          .remove(
+            "open"
+          );
+
 
         mobileMenuButton.setAttribute(
           "aria-expanded",
@@ -1104,11 +2518,15 @@ if (mobileMenuButton && mobileMenu) {
 
 }
 
+
 /* =========================================================
-   START
+   START WEBSITE
 ========================================================= */
 
 loadTrainings();
+
 loadMeetings();
+
 loadBoardMembers();
+
 checkRosterStatus();
