@@ -1543,46 +1543,53 @@ a.member-resource-card:hover{
 ========================================================= */
 
 .member-roster-toggle-wrap{
-  margin:10px 0 20px;
+  margin:28px 0 24px;
 }
 
 .member-roster-toggle{
-  width:100%;
-  display:flex;
+  display:inline-flex;
   align-items:center;
-  justify-content:space-between;
-  gap:20px;
+  justify-content:center;
+  gap:9px;
+
+  width:auto;
 
   background:var(--navy);
   color:#fff;
 
   border:0;
-  border-radius:12px;
+  border-radius:9px;
 
-  padding:14px 18px;
+  padding:11px 17px;
 
-  font:inherit;
-  font-size:14px;
+  font-family:inherit;
+  font-size:13px;
   font-weight:800;
 
   cursor:pointer;
 
+  box-shadow:0 4px 12px rgba(16,35,63,.12);
+
   transition:
     background .2s ease,
-    transform .2s ease;
+    transform .2s ease,
+    box-shadow .2s ease;
 }
 
 .member-roster-toggle:hover{
   background:var(--navy2);
+  transform:translateY(-1px);
+  box-shadow:0 7px 16px rgba(16,35,63,.18);
 }
 
 .member-roster-toggle:active{
-  transform:scale(.995);
+  transform:translateY(0);
 }
 
 .member-roster-toggle-arrow{
   color:var(--gold);
-  font-size:14px;
+  font-size:11px;
+  line-height:1;
 }
 
 .member-roster-section{
