@@ -535,7 +535,201 @@
         </div>
 
       </div>
+<!-- ==================================================
+     MEMBER DOCUMENTS
+================================================== -->
 
+<div class="admin-grid admin-section-gap">
+
+  <!-- DOCUMENT UPLOAD / EDIT FORM -->
+
+  <form
+    id="document-form"
+    class="admin-card"
+    enctype="multipart/form-data"
+  >
+
+    <p class="eyebrow">Member Documents</p>
+
+    <h3 id="document-form-title">
+      Add Member Document
+    </h3>
+
+    <input
+      type="hidden"
+      id="document-id"
+    >
+
+
+    <label>
+      Document Title
+
+      <input
+        type="text"
+        name="title"
+        id="document-title"
+        placeholder="2026 Chapter Meeting Minutes"
+        required
+      >
+    </label>
+
+
+    <label>
+      Category
+
+      <select
+        name="category"
+        id="document-category"
+      >
+        <option value="Chapter Documents">
+          Chapter Documents
+        </option>
+
+        <option value="Meeting Minutes">
+          Meeting Minutes
+        </option>
+
+        <option value="Training Resources">
+          Training Resources
+        </option>
+
+        <option value="Rules & Mechanics">
+          Rules &amp; Mechanics
+        </option>
+
+        <option value="Forms">
+          Forms
+        </option>
+
+        <option value="Other">
+          Other
+        </option>
+      </select>
+    </label>
+
+
+    <label>
+      Description
+
+      <textarea
+        name="description"
+        id="document-description"
+        rows="4"
+        placeholder="Brief description of this document"
+      ></textarea>
+    </label>
+
+
+    <label>
+      File
+
+      <input
+        type="file"
+        name="file"
+        id="document-file"
+        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
+      >
+    </label>
+
+
+    <p class="small" id="document-file-help">
+      PDF, Word, Excel, PowerPoint or text file.
+      Maximum file size: 25 MB.
+    </p>
+
+
+    <div
+      id="document-current-file"
+    ></div>
+
+
+    <label>
+      Display Order
+
+      <input
+        type="number"
+        name="display_order"
+        id="document-order"
+        min="0"
+        value="0"
+      >
+    </label>
+
+
+    <p class="small">
+      Lower numbers appear first within their category.
+    </p>
+
+
+    <div class="admin-form-actions">
+
+      <button
+        class="btn primary"
+        id="document-submit"
+        type="submit"
+      >
+        Upload Document
+      </button>
+
+
+      <button
+        class="btn secondary"
+        id="document-cancel"
+        type="button"
+        style="display:none;"
+      >
+        Cancel Edit
+      </button>
+
+    </div>
+
+
+    <div
+      class="form-message"
+      id="document-message"
+    ></div>
+
+  </form>
+
+
+  <!-- DOCUMENT MANAGEMENT -->
+
+  <div class="admin-card">
+
+    <p class="eyebrow">
+      Document Management
+    </p>
+
+
+    <div class="manage-sessions-heading">
+
+      <h3>
+        Current Member Documents
+      </h3>
+
+
+      <button
+        class="btn secondary"
+        type="button"
+        id="refresh-documents"
+      >
+        Refresh
+      </button>
+
+    </div>
+
+
+    <div id="admin-document-list">
+
+      <div class="loading">
+        Loading documents...
+      </div>
+
+    </div>
+
+  </div>
+
+</div>
 
     </div>
 
