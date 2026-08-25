@@ -1,11 +1,10 @@
-let adminSessions = [];
-
 /* =========================================================
-   PUBLIC TRAINING / RATING LIST
+   TRAINING & RATING SESSIONS
 ========================================================= */
 
 async function loadTrainings() {
   const box = document.getElementById("training-list");
+  if (!box) return;
 
   try {
     const response = await fetch("/api/trainings");
@@ -19,7 +18,7 @@ async function loadTrainings() {
       box.innerHTML = `
         <div class="training-card">
           <div class="training-type">Coming Soon</div>
-          <h3>Training calendar</h3>
+          <h3>Training Calendar</h3>
           <p class="training-description">
             Chapter training sessions and rating opportunities will be posted here.
           </p>
@@ -28,26 +27,34 @@ async function loadTrainings() {
       return;
     }
 
-    box.innerHTML = data.map(t => `
+    box.innerHTML = data.map(session => `
       <article class="training-card">
-        <div class="training-type">${escapeHtml(t.type)}</div>
-        <h3>${escapeHtml(t.title)}</h3>
-        <div class="training-date">${formatDate(t.date)}</div>
+        <div class="training-type">
+          ${escapeHtml(session.type)}
+        </div>
+
+        <h3>${escapeHtml(session.title)}</h3>
+
+        <div class="training-date">
+          ${formatDate(session.date)}
+        </div>
+
         ${
-          t.location
-            ? `<div class="training-location">${escapeHtml(t.location)}</div>`
+          session.location
+            ? `<div class="training-location">${escapeHtml(session.location)}</div>`
             : ""
         }
+
         ${
-          t.description
-            ? `<div class="training-description">${escapeHtml(t.description)}</div>`
+          session.description
+            ? `<div class="training-description">${escapeHtml(session.description)}</div>`
             : ""
         }
       </article>
     `).join("");
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("Training error:", error);
 
     box.innerHTML = `
       <div class="loading">
@@ -59,12 +66,189 @@ async function loadTrainings() {
 
 
 /* =========================================================
-   PUBLIC ROSTER
+   CHAPTER MEETINGS
+========================================================= */
+
+async function loadMeetings() {
+  const box = document.getElementById("meeting-list");
+  if (!box) return;
+
+  try {
+    const response = await fetch("/api/meetings");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to load meetings.");
+    }
+
+    if (!data.length) {
+      box.innerHTML = `
+        <div class="training-card">
+          <div class="training-type">No Meetings Scheduled</div>
+          <h3>Chapter Meetings</h3>
+          <p class="training-description">
+            Upcoming chapter meetings will be posted here.
+          </p>
+        </div>
+      `;
+      return;
+    }
+
+    box.innerHTML = data.map(meeting => `
+      <article class="training-card meeting-card">
+
+        <div class="training-type">
+          Chapter Meeting
+        </div>
+
+        <h3>
+          ${escapeHtml(meeting.title)}
+        </h3>
+
+        <div class="training-date">
+          ${formatDate(meeting.meeting_date)}
+        </div>
+
+        ${
+          meeting.meeting_time
+            ? `<div class="meeting-time">${formatTime(meeting.meeting_time)}</div>`
+            : ""
+        }
+
+        ${
+          meeting.location
+            ? `<div class="training-location">${escapeHtml(meeting.location)}</div>`
+            : ""
+        }
+
+        ${
+          meeting.description
+            ? `<div class="training-description">${escapeHtml(meeting.description)}</div>`
+            : ""
+        }
+
+        ${
+          meeting.meeting_link
+            ? `
+              <div class="meeting-link-wrap">
+                <a
+                  class="btn primary meeting-link"
+                  href="${escapeAttribute(meeting.meeting_link)}"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  Join / View Meeting
+                </a>
+              </div>
+            `
+            : ""
+        }
+
+      </article>
+    `).join("");
+
+  } catch (error) {
+    console.error("Meeting error:", error);
+
+    box.innerHTML = `
+      <div class="loading">
+        Unable to load chapter meetings.
+      </div>
+    `;
+  }
+}
+
+
+/* =========================================================
+   BOARD MEMBERS
+========================================================= */
+
+async function loadBoardMembers() {
+  const box = document.getElementById("board-list");
+  if (!box) return;
+
+  try {
+    const response = await fetch("/api/board-members");
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Unable to load board members.");
+    }
+
+    if (!data.length) {
+      box.innerHTML = `
+        <div class="board-empty">
+          Board member information will be added soon.
+        </div>
+      `;
+      return;
+    }
+
+    box.innerHTML = data.map(member => `
+      <article class="board-card">
+
+        <div class="board-photo-wrap">
+
+          ${
+            member.photo_url
+              ? `
+                <img
+                  class="board-photo"
+                  src="${escapeAttribute(member.photo_url)}"
+                  alt="${escapeAttribute(member.name)}"
+                >
+              `
+              : `
+                <div class="board-photo board-photo-placeholder">
+                  ${getInitials(member.name)}
+                </div>
+              `
+          }
+
+        </div>
+
+        <div class="board-card-content">
+
+          <h3>
+            ${escapeHtml(member.name)}
+          </h3>
+
+          <div class="board-position">
+            ${escapeHtml(member.position_title)}
+          </div>
+
+          ${
+            member.description
+              ? `<p>${escapeHtml(member.description)}</p>`
+              : ""
+          }
+
+        </div>
+
+      </article>
+    `).join("");
+
+  } catch (error) {
+    console.error("Board member error:", error);
+
+    box.innerHTML = `
+      <div class="loading">
+        Unable to load board members.
+      </div>
+    `;
+  }
+}
+
+
+/* =========================================================
+   ROSTER
 ========================================================= */
 
 async function loadRoster() {
   const table = document.getElementById("roster-table");
   const meta = document.getElementById("roster-meta");
+
+  if (!table) return;
 
   try {
     const response = await fetch("/api/roster");
@@ -85,7 +269,10 @@ async function loadRoster() {
         </tbody>
       `;
 
-      meta.textContent = "";
+      if (meta) {
+        meta.textContent = "";
+      }
+
       return;
     }
 
@@ -94,8 +281,8 @@ async function loadRoster() {
     table.innerHTML = `
       <thead>
         <tr>
-          ${headers.map(h => `
-            <th>${escapeHtml(h)}</th>
+          ${headers.map(header => `
+            <th>${escapeHtml(header)}</th>
           `).join("")}
         </tr>
       </thead>
@@ -103,21 +290,23 @@ async function loadRoster() {
       <tbody>
         ${data.rows.map(row => `
           <tr>
-            ${headers.map(h => `
-              <td>${escapeHtml(row[h])}</td>
+            ${headers.map(header => `
+              <td>${escapeHtml(row[header])}</td>
             `).join("")}
           </tr>
         `).join("")}
       </tbody>
     `;
 
-    meta.textContent =
-      `${data.rows.length} officials • Updated ${
-        new Date(data.uploaded_at).toLocaleDateString()
-      }`;
+    if (meta) {
+      meta.textContent =
+        `${data.rows.length} officials • Updated ${
+          new Date(data.uploaded_at).toLocaleDateString()
+        }`;
+    }
 
-  } catch (e) {
-    console.error(e);
+  } catch (error) {
+    console.error("Roster error:", error);
 
     table.innerHTML = `
       <tbody>
@@ -133,438 +322,16 @@ async function loadRoster() {
 
 
 /* =========================================================
-   ADMIN SESSION LIST
-========================================================= */
-
-async function loadAdminSessions() {
-  const box = document.getElementById("admin-session-list");
-
-  if (!box) return;
-
-  box.innerHTML = `
-    <div class="loading">
-      Loading sessions...
-    </div>
-  `;
-
-  try {
-    const response = await fetch("/api/trainings");
-    const data = await response.json();
-
-    if (!response.ok) {
-      throw new Error(data.error || "Unable to load sessions.");
-    }
-
-    adminSessions = data;
-
-    if (!data.length) {
-      box.innerHTML = `
-        <p class="muted">
-          No training or rating sessions have been added yet.
-        </p>
-      `;
-      return;
-    }
-
-    box.innerHTML = `
-      <div class="admin-session-table-wrap">
-        <table class="admin-session-table">
-          <thead>
-            <tr>
-              <th>Date</th>
-              <th>Title</th>
-              <th>Type</th>
-              <th>Location</th>
-              <th>Actions</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            ${data.map(t => `
-              <tr>
-                <td>${formatDate(t.date)}</td>
-
-                <td>
-                  <strong>${escapeHtml(t.title)}</strong>
-                </td>
-
-                <td>
-                  ${escapeHtml(t.type)}
-                </td>
-
-                <td>
-                  ${escapeHtml(t.location || "—")}
-                </td>
-
-                <td class="session-actions">
-                  <button
-                    type="button"
-                    class="btn secondary edit-session"
-                    data-id="${t.id}"
-                  >
-                    Edit
-                  </button>
-
-                  <button
-                    type="button"
-                    class="btn danger delete-session"
-                    data-id="${t.id}"
-                  >
-                    Delete
-                  </button>
-                </td>
-              </tr>
-            `).join("")}
-          </tbody>
-        </table>
-      </div>
-    `;
-
-    document.querySelectorAll(".edit-session").forEach(button => {
-      button.addEventListener("click", () => {
-        startEditingSession(button.dataset.id);
-      });
-    });
-
-    document.querySelectorAll(".delete-session").forEach(button => {
-      button.addEventListener("click", () => {
-        deleteSession(button.dataset.id);
-      });
-    });
-
-  } catch (e) {
-    console.error(e);
-
-    box.innerHTML = `
-      <div class="loading">
-        Unable to load sessions.
-      </div>
-    `;
-  }
-}
-
-
-/* =========================================================
-   ADD / UPDATE SESSION
-========================================================= */
-
-const trainingForm = document.getElementById("training-form");
-
-trainingForm.addEventListener("submit", async e => {
-  e.preventDefault();
-
-  const form = e.currentTarget;
-  const message = document.getElementById("training-message");
-
-  const id = document.getElementById("training-id").value;
-
-  const body = Object.fromEntries(
-    new FormData(form).entries()
-  );
-
-  const isEditing = Boolean(id);
-
-  const url = isEditing
-    ? `/api/trainings/${id}`
-    : "/api/trainings";
-
-  const method = isEditing
-    ? "PUT"
-    : "POST";
-
-  message.textContent = isEditing
-    ? "Updating session..."
-    : "Publishing session...";
-
-  try {
-    const response = await fetch(url, {
-      method,
-      headers: {
-        "Content-Type": "application/json",
-        "x-admin-password": body.password
-      },
-      body: JSON.stringify(body)
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      message.textContent =
-        result.error || "Something went wrong.";
-
-      return;
-    }
-
-    message.textContent = isEditing
-      ? "Session updated."
-      : "Session published.";
-
-    resetTrainingForm(false);
-
-    await loadTrainings();
-    await loadAdminSessions();
-
-  } catch (e) {
-    console.error(e);
-
-    message.textContent =
-      "Unable to communicate with the server.";
-  }
-});
-
-
-/* =========================================================
-   START EDITING
-========================================================= */
-
-function startEditingSession(id) {
-  const session = adminSessions.find(
-    item => String(item.id) === String(id)
-  );
-
-  if (!session) return;
-
-  document.getElementById("training-id").value = session.id;
-
-  document.getElementById("training-title").value =
-    session.title || "";
-
-  document.getElementById("training-date").value =
-    normalizeDateForInput(session.date);
-
-  document.getElementById("training-type").value =
-    session.type || "Training";
-
-  document.getElementById("training-location").value =
-    session.location || "";
-
-  document.getElementById("training-description").value =
-    session.description || "";
-
-  document.getElementById("training-form-title").textContent =
-    "Edit Training / Rating Session";
-
-  document.getElementById("training-submit").textContent =
-    "Update Session";
-
-  document.getElementById("training-cancel").style.display =
-    "inline-flex";
-
-  document.getElementById("training-message").textContent =
-    "Editing existing session.";
-
-  document.getElementById("training-form").scrollIntoView({
-    behavior: "smooth",
-    block: "start"
-  });
-}
-
-
-/* =========================================================
-   CANCEL EDIT
-========================================================= */
-
-document
-  .getElementById("training-cancel")
-  .addEventListener("click", () => {
-    resetTrainingForm(true);
-  });
-
-
-function resetTrainingForm(clearMessage = true) {
-  const form = document.getElementById("training-form");
-
-  /*
-    Save password so the administrator does not have to
-    re-enter it after every add/edit operation.
-  */
-  const password =
-    document.getElementById("training-password").value;
-
-  form.reset();
-
-  document.getElementById("training-password").value =
-    password;
-
-  document.getElementById("training-id").value = "";
-
-  document.getElementById("training-form-title").textContent =
-    "Add Training / Rating Session";
-
-  document.getElementById("training-submit").textContent =
-    "Publish Session";
-
-  document.getElementById("training-cancel").style.display =
-    "none";
-
-  if (clearMessage) {
-    document.getElementById("training-message").textContent =
-      "";
-  }
-}
-
-
-/* =========================================================
-   DELETE SESSION
-========================================================= */
-
-async function deleteSession(id) {
-  const session = adminSessions.find(
-    item => String(item.id) === String(id)
-  );
-
-  if (!session) return;
-
-  const confirmed = window.confirm(
-    `Delete "${session.title}"?\n\nThis cannot be undone.`
-  );
-
-  if (!confirmed) return;
-
-  const password =
-    document.getElementById("training-password").value;
-
-  if (!password) {
-    alert(
-      "Enter your Admin Password in the session form before deleting a session."
-    );
-
-    document
-      .getElementById("training-password")
-      .focus();
-
-    return;
-  }
-
-  try {
-    const response = await fetch(
-      `/api/trainings/${id}`,
-      {
-        method: "DELETE",
-        headers: {
-          "x-admin-password": password
-        }
-      }
-    );
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      alert(
-        result.error || "Could not delete the session."
-      );
-
-      return;
-    }
-
-    const editingId =
-      document.getElementById("training-id").value;
-
-    if (String(editingId) === String(id)) {
-      resetTrainingForm(true);
-    }
-
-    await loadTrainings();
-    await loadAdminSessions();
-
-  } catch (e) {
-    console.error(e);
-
-    alert(
-      "Unable to communicate with the server."
-    );
-  }
-}
-
-
-/* =========================================================
-   REFRESH ADMIN SESSION LIST
-========================================================= */
-
-const refreshButton =
-  document.getElementById("refresh-admin-sessions");
-
-if (refreshButton) {
-  refreshButton.addEventListener("click", () => {
-    loadAdminSessions();
-  });
-}
-
-
-/* =========================================================
-   ROSTER UPLOAD
-========================================================= */
-
-document
-  .getElementById("roster-form")
-  .addEventListener("submit", async e => {
-    e.preventDefault();
-
-    const form = e.currentTarget;
-
-    const message =
-      document.getElementById("roster-message");
-
-    const password =
-      form.querySelector('[name="password"]').value;
-
-    const fd = new FormData(form);
-
-    message.textContent = "Uploading roster...";
-
-    try {
-      const response = await fetch("/api/roster", {
-        method: "POST",
-        headers: {
-          "x-admin-password": password
-        },
-        body: fd
-      });
-
-      const result = await response.json();
-
-      message.textContent = response.ok
-        ? `Roster uploaded: ${result.count} rows.`
-        : (
-          result.error ||
-          "Something went wrong."
-        );
-
-      if (response.ok) {
-        form.reset();
-        await loadRoster();
-      }
-
-    } catch (e) {
-      console.error(e);
-
-      message.textContent =
-        "Unable to communicate with the server.";
-    }
-  });
-
-
-/* =========================================================
    HELPERS
 ========================================================= */
-
-function normalizeDateForInput(value) {
-  if (!value) return "";
-
-  return String(value).substring(0, 10);
-}
-
 
 function formatDate(value) {
   if (!value) return "";
 
-  const dateOnly =
-    String(value).substring(0, 10);
+  const dateOnly = String(value).substring(0, 10);
+  const date = new Date(dateOnly + "T00:00:00");
 
-  const d =
-    new Date(dateOnly + "T00:00:00");
-
-  return d.toLocaleDateString(
+  return date.toLocaleDateString(
     undefined,
     {
       weekday: "short",
@@ -576,24 +343,59 @@ function formatDate(value) {
 }
 
 
+function formatTime(value) {
+  if (!value) return "";
+
+  const parts = String(value).split(":");
+
+  let hour = Number(parts[0]);
+  const minutes = parts[1] || "00";
+
+  const suffix =
+    hour >= 12 ? "PM" : "AM";
+
+  hour =
+    hour % 12 || 12;
+
+  return `${hour}:${minutes} ${suffix}`;
+}
+
+
+function getInitials(name) {
+  return String(name || "")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 2)
+    .map(part => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+
 function escapeHtml(value) {
-  return String(value ?? "").replace(
-    /[&<>"']/g,
-    m => ({
-      "&": "&amp;",
-      "<": "&lt;",
-      ">": "&gt;",
-      '"': "&quot;",
-      "'": "&#039;"
-    }[m])
-  );
+  return String(value ?? "")
+    .replace(
+      /[&<>"']/g,
+      character => ({
+        "&": "&amp;",
+        "<": "&lt;",
+        ">": "&gt;",
+        '"': "&quot;",
+        "'": "&#039;"
+      }[character])
+    );
+}
+
+
+function escapeAttribute(value) {
+  return escapeHtml(value);
 }
 
 
 /* =========================================================
-   INITIAL PAGE LOAD
+   START PUBLIC WEBSITE
 ========================================================= */
 
 loadTrainings();
+loadMeetings();
+loadBoardMembers();
 loadRoster();
-loadAdminSessions();
