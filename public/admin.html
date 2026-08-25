@@ -1,3 +1,4 @@
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -30,6 +31,8 @@
 <section class="section admin-section">
 
   <div class="container">
+
+    <!-- LOGIN -->
 
     <div id="admin-login-panel" class="admin-login-wrap">
 
@@ -67,6 +70,8 @@
     </div>
 
 
+    <!-- ADMIN PORTAL -->
+
     <div id="admin-portal" style="display:none;">
 
       <div class="admin-portal-heading">
@@ -75,7 +80,8 @@
           <p class="eyebrow">Chapter Administration</p>
           <h2>Admin Portal</h2>
           <p class="muted">
-            Manage training sessions, rating sessions and the chapter roster.
+            Manage training, ratings, chapter meetings,
+            board members and the chapter roster.
           </p>
         </div>
 
@@ -89,6 +95,10 @@
 
       </div>
 
+
+      <!-- ==================================================
+           TRAINING + ROSTER
+      ================================================== -->
 
       <div class="admin-grid">
 
@@ -131,7 +141,6 @@
             >
               <option>Training</option>
               <option>Rating Session</option>
-              <option>Meeting</option>
               <option>Clinic</option>
             </select>
           </label>
@@ -247,6 +256,287 @@
 
       </div>
 
+
+      <!-- ==================================================
+           CHAPTER MEETINGS
+      ================================================== -->
+
+      <div class="admin-grid admin-section-gap">
+
+        <form id="meeting-form" class="admin-card">
+
+          <p class="eyebrow">Chapter Meetings</p>
+
+          <h3 id="meeting-form-title">
+            Add Chapter Meeting
+          </h3>
+
+          <input
+            type="hidden"
+            id="meeting-id"
+          >
+
+          <label>
+            Meeting Title
+            <input
+              name="title"
+              id="meeting-title"
+              placeholder="Fall Chapter Meeting"
+              required
+            >
+          </label>
+
+          <label>
+            Date
+            <input
+              type="date"
+              name="meeting_date"
+              id="meeting-date"
+              required
+            >
+          </label>
+
+          <label>
+            Time
+            <input
+              type="time"
+              name="meeting_time"
+              id="meeting-time"
+            >
+          </label>
+
+          <label>
+            Location
+            <input
+              name="location"
+              id="meeting-location"
+              placeholder="Location / Online"
+            >
+          </label>
+
+          <label>
+            Meeting Link
+            <input
+              type="url"
+              name="meeting_link"
+              id="meeting-link"
+              placeholder="https://..."
+            >
+          </label>
+
+          <label>
+            Description
+            <textarea
+              name="description"
+              id="meeting-description"
+              rows="4"
+              placeholder="Meeting agenda, details or notes"
+            ></textarea>
+          </label>
+
+          <div class="admin-form-actions">
+
+            <button
+              class="btn primary"
+              id="meeting-submit"
+              type="submit"
+            >
+              Publish Meeting
+            </button>
+
+            <button
+              class="btn secondary"
+              id="meeting-cancel"
+              type="button"
+              style="display:none;"
+            >
+              Cancel Edit
+            </button>
+
+          </div>
+
+          <div
+            class="form-message"
+            id="meeting-message"
+          ></div>
+
+        </form>
+
+
+        <div class="admin-card">
+
+          <p class="eyebrow">Meeting Management</p>
+
+          <div class="manage-sessions-heading">
+
+            <h3>Existing Chapter Meetings</h3>
+
+            <button
+              class="btn secondary"
+              type="button"
+              id="refresh-meetings"
+            >
+              Refresh
+            </button>
+
+          </div>
+
+          <div id="admin-meeting-list">
+            <div class="loading">
+              Loading meetings...
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+
+      <!-- ==================================================
+           BOARD MEMBERS
+      ================================================== -->
+
+      <div class="admin-grid admin-section-gap">
+
+        <form
+          id="board-form"
+          class="admin-card"
+          enctype="multipart/form-data"
+        >
+
+          <p class="eyebrow">Board Members</p>
+
+          <h3 id="board-form-title">
+            Add Board Member
+          </h3>
+
+          <input
+            type="hidden"
+            id="board-id"
+          >
+
+          <label>
+            Name
+            <input
+              name="name"
+              id="board-name"
+              placeholder="Official's Name"
+              required
+            >
+          </label>
+
+          <label>
+            Position Title
+            <input
+              name="position_title"
+              id="board-position"
+              placeholder="Chapter President"
+              required
+            >
+          </label>
+
+          <label>
+            Photo
+            <input
+              type="file"
+              name="photo"
+              id="board-photo"
+              accept=".jpg,.jpeg,.png,.webp"
+            >
+          </label>
+
+          <p class="small">
+            JPG, PNG or WebP. Maximum file size: 5 MB.
+          </p>
+
+          <div
+            id="board-current-photo"
+            class="board-current-photo"
+          ></div>
+
+          <label>
+            Responsibilities
+            <textarea
+              name="description"
+              id="board-description"
+              rows="5"
+              placeholder="Brief description of this board member's responsibilities"
+            ></textarea>
+          </label>
+
+          <label>
+            Display Order
+            <input
+              type="number"
+              name="display_order"
+              id="board-order"
+              min="0"
+              value="0"
+            >
+          </label>
+
+          <p class="small">
+            Lower numbers appear first on the public website.
+          </p>
+
+          <div class="admin-form-actions">
+
+            <button
+              class="btn primary"
+              id="board-submit"
+              type="submit"
+            >
+              Add Board Member
+            </button>
+
+            <button
+              class="btn secondary"
+              id="board-cancel"
+              type="button"
+              style="display:none;"
+            >
+              Cancel Edit
+            </button>
+
+          </div>
+
+          <div
+            class="form-message"
+            id="board-message"
+          ></div>
+
+        </form>
+
+
+        <div class="admin-card">
+
+          <p class="eyebrow">Board Management</p>
+
+          <div class="manage-sessions-heading">
+
+            <h3>Current Board Members</h3>
+
+            <button
+              class="btn secondary"
+              type="button"
+              id="refresh-board"
+            >
+              Refresh
+            </button>
+
+          </div>
+
+          <div id="admin-board-list">
+            <div class="loading">
+              Loading board members...
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+
+
     </div>
 
   </div>
@@ -255,7 +545,9 @@
 
 </main>
 
+
 <script src="/admin.js"></script>
 
 </body>
 </html>
+```
