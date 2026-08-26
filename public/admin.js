@@ -106,11 +106,11 @@ document
     }
 
     resetTrainingForm();
-resetMeetingForm();
-resetBoardForm();
-resetDocumentForm();
+    resetMeetingForm();
+    resetBoardForm();
+    resetDocumentForm();
 
-showLogin();
+    showLogin();
   });
 
 
@@ -139,6 +139,7 @@ async function loadAdminSessions() {
     }
 
     adminSessions = data;
+    updateDashboardSummaries();
 
     if (!data.length) {
       box.innerHTML = `
@@ -451,12 +452,10 @@ async function deleteSession(id) {
 
 
 document
-  .getElementById("refresh-admin-sessions")
+  .getElementById("refresh-sessions")
   .addEventListener("click", () => {
     loadAdminSessions();
   });
-
-
 /* =========================================================
    CHAPTER MEETINGS
 ========================================================= */
@@ -477,11 +476,14 @@ async function loadAdminMeetings() {
 
     if (!response.ok) {
       throw new Error(
-        data.error || "Unable to load meetings."
+        data.error ||
+        "Unable to load meetings."
       );
     }
 
     adminMeetings = data;
+
+    updateDashboardSummaries();
 
     if (!data.length) {
       box.innerHTML = `
@@ -489,76 +491,112 @@ async function loadAdminMeetings() {
           No chapter meetings have been added yet.
         </p>
       `;
+
       return;
     }
 
-    box.innerHTML = data.map(meeting => `
-      <div class="admin-list-item">
+    box.innerHTML = `
+      <div class="admin-session-table-wrap">
 
-        <div class="admin-list-main">
+        <table class="admin-session-table">
 
-          <strong>
-            ${escapeHtml(meeting.title)}
-          </strong>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Time</th>
+              <th>Title</th>
+              <th>Location</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
 
-          <div class="small">
-            ${formatDate(meeting.meeting_date)}
-            ${
-              meeting.meeting_time
-                ? ` • ${formatTime(meeting.meeting_time)}`
-                : ""
-            }
-          </div>
+          <tbody>
 
-          ${
-            meeting.location
-              ? `
-                <div class="small">
-                  ${escapeHtml(meeting.location)}
-                </div>
-              `
-              : ""
-          }
+            ${data.map(meeting => `
+              <tr>
 
-        </div>
+                <td>
+                  ${formatDate(meeting.meeting_date)}
+                </td>
 
-        <div class="session-actions">
+                <td>
+                  ${
+                    meeting.meeting_time
+                      ? formatTime(meeting.meeting_time)
+                      : "—"
+                  }
+                </td>
 
-          <button
-            type="button"
-            class="btn secondary edit-meeting"
-            data-id="${meeting.id}"
-          >
-            Edit
-          </button>
+                <td>
+                  <strong>
+                    ${escapeHtml(meeting.title)}
+                  </strong>
+                </td>
 
-          <button
-            type="button"
-            class="btn danger delete-meeting"
-            data-id="${meeting.id}"
-          >
-            Delete
-          </button>
+                <td>
+                  ${escapeHtml(meeting.location || "—")}
+                </td>
 
-        </div>
+                <td class="session-actions">
+
+                  <button
+                    type="button"
+                    class="btn secondary edit-meeting"
+                    data-id="${meeting.id}"
+                  >
+                    Edit
+                  </button>
+
+                  <button
+                    type="button"
+                    class="btn danger delete-meeting"
+                    data-id="${meeting.id}"
+                  >
+                    Delete
+                  </button>
+
+                </td>
+
+              </tr>
+            `).join("")}
+
+          </tbody>
+
+        </table>
 
       </div>
-    `).join("");
+    `;
+
 
     document
       .querySelectorAll(".edit-meeting")
       .forEach(button => {
-        button.addEventListener("click", () => {
-          startEditingMeeting(button.dataset.id);
-        });
+
+        button.addEventListener(
+          "click",
+          () => {
+            startEditingMeeting(
+              button.dataset.id
+            );
+          }
+        );
+
       });
+
 
     document
       .querySelectorAll(".delete-meeting")
       .forEach(button => {
-        button.addEventListener("click", () => {
-          deleteMeeting(button.dataset.id);
-        });
+
+        button.addEventListener(
+          "click",
+          () => {
+            deleteMeeting(
+              button.dataset.id
+            );
+          }
+        );
+
       });
 
   } catch (error) {
@@ -573,132 +611,187 @@ async function loadAdminMeetings() {
 }
 
 
+/* =========================================================
+   ADD / UPDATE MEETING
+========================================================= */
+
 document
   .getElementById("meeting-form")
-  .addEventListener("submit", async e => {
-    e.preventDefault();
+  .addEventListener(
+    "submit",
+    async e => {
 
-    const form =
-      e.currentTarget;
+      e.preventDefault();
 
-    const message =
-      document.getElementById("meeting-message");
+      const form =
+        e.currentTarget;
 
-    const id =
-      document.getElementById("meeting-id").value;
+      const message =
+        document.getElementById(
+          "meeting-message"
+        );
 
-    const body =
-      Object.fromEntries(
-        new FormData(form).entries()
-      );
+      const id =
+        document.getElementById(
+          "meeting-id"
+        ).value;
 
-    const isEditing =
-      Boolean(id);
+      const body =
+        Object.fromEntries(
+          new FormData(form).entries()
+        );
 
-    const url =
-      isEditing
-        ? `/api/meetings/${id}`
-        : "/api/meetings";
+      const isEditing =
+        Boolean(id);
 
-    const method =
-      isEditing
-        ? "PUT"
-        : "POST";
+      const url =
+        isEditing
+          ? `/api/meetings/${id}`
+          : "/api/meetings";
 
-    message.textContent =
-      isEditing
-        ? "Updating meeting..."
-        : "Publishing meeting...";
-
-    try {
-      const response =
-        await fetch(url, {
-          method,
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify(body)
-        });
-
-      const result =
-        await response.json();
-
-      if (response.status === 401) {
-        showLogin();
-        return;
-      }
-
-      if (!response.ok) {
-        message.textContent =
-          result.error ||
-          "Could not save the meeting.";
-
-        return;
-      }
+      const method =
+        isEditing
+          ? "PUT"
+          : "POST";
 
       message.textContent =
         isEditing
-          ? "Meeting updated."
-          : "Meeting published.";
+          ? "Updating meeting..."
+          : "Publishing meeting...";
 
-      resetMeetingForm(false);
+      try {
+        const response =
+          await fetch(
+            url,
+            {
+              method,
 
-      await loadAdminMeetings();
+              headers: {
+                "Content-Type":
+                  "application/json"
+              },
 
-    } catch (error) {
-      console.error(error);
+              body:
+                JSON.stringify(body)
+            }
+          );
 
-      message.textContent =
-        "Unable to communicate with the server.";
+        const result =
+          await response.json();
+
+        if (
+          response.status === 401
+        ) {
+          showLogin();
+          return;
+        }
+
+        if (!response.ok) {
+          message.textContent =
+            result.error ||
+            "Something went wrong.";
+
+          return;
+        }
+
+        message.textContent =
+          isEditing
+            ? "Meeting updated."
+            : "Meeting published.";
+
+        resetMeetingForm(false);
+
+        await loadAdminMeetings();
+
+      } catch (error) {
+        console.error(error);
+
+        message.textContent =
+          "Unable to communicate with the server.";
+      }
     }
-  });
+  );
 
+
+/* =========================================================
+   EDIT MEETING
+========================================================= */
 
 function startEditingMeeting(id) {
   const meeting =
     adminMeetings.find(
       item =>
-        String(item.id) === String(id)
+        String(item.id) ===
+        String(id)
     );
 
-  if (!meeting) return;
+  if (!meeting) {
+    return;
+  }
 
-  document.getElementById("meeting-id").value =
+  document.getElementById(
+    "meeting-id"
+  ).value =
     meeting.id;
 
-  document.getElementById("meeting-title").value =
+  document.getElementById(
+    "meeting-title"
+  ).value =
     meeting.title || "";
 
-  document.getElementById("meeting-date").value =
-    normalizeDateForInput(meeting.meeting_date);
+  document.getElementById(
+    "meeting-date"
+  ).value =
+    normalizeDateForInput(
+      meeting.meeting_date
+    );
 
-  document.getElementById("meeting-time").value =
-    meeting.meeting_time
-      ? String(meeting.meeting_time).substring(0, 5)
-      : "";
+  document.getElementById(
+    "meeting-time"
+  ).value =
+    normalizeTimeForInput(
+      meeting.meeting_time
+    );
 
-  document.getElementById("meeting-location").value =
+  document.getElementById(
+    "meeting-location"
+  ).value =
     meeting.location || "";
 
-  document.getElementById("meeting-link").value =
-    meeting.meeting_link || "";
-
-  document.getElementById("meeting-description").value =
+  document.getElementById(
+    "meeting-description"
+  ).value =
     meeting.description || "";
 
-  document.getElementById("meeting-form-title").textContent =
+  document.getElementById(
+    "meeting-link"
+  ).value =
+    meeting.meeting_link || "";
+
+  document.getElementById(
+    "meeting-form-title"
+  ).textContent =
     "Edit Chapter Meeting";
 
-  document.getElementById("meeting-submit").textContent =
+  document.getElementById(
+    "meeting-submit"
+  ).textContent =
     "Update Meeting";
 
-  document.getElementById("meeting-cancel").style.display =
+  document.getElementById(
+    "meeting-cancel"
+  ).style.display =
     "inline-flex";
 
-  document.getElementById("meeting-message").textContent =
+  document.getElementById(
+    "meeting-message"
+  ).textContent =
     "Editing existing meeting.";
 
-  document.getElementById("meeting-form")
+  document
+    .getElementById(
+      "meeting-form"
+    )
     .scrollIntoView({
       behavior: "smooth",
       block: "start"
@@ -706,63 +799,100 @@ function startEditingMeeting(id) {
 }
 
 
+/* =========================================================
+   CANCEL MEETING EDIT
+========================================================= */
+
 document
   .getElementById("meeting-cancel")
-  .addEventListener("click", () => {
-    resetMeetingForm();
-  });
+  .addEventListener(
+    "click",
+    () => {
+      resetMeetingForm();
+    }
+  );
 
 
-function resetMeetingForm(clearMessage = true) {
+/* =========================================================
+   RESET MEETING FORM
+========================================================= */
+
+function resetMeetingForm(
+  clearMessage = true
+) {
   document
-    .getElementById("meeting-form")
+    .getElementById(
+      "meeting-form"
+    )
     .reset();
 
-  document.getElementById("meeting-id").value =
-    "";
+  document.getElementById(
+    "meeting-id"
+  ).value = "";
 
-  document.getElementById("meeting-form-title").textContent =
+  document.getElementById(
+    "meeting-form-title"
+  ).textContent =
     "Add Chapter Meeting";
 
-  document.getElementById("meeting-submit").textContent =
+  document.getElementById(
+    "meeting-submit"
+  ).textContent =
     "Publish Meeting";
 
-  document.getElementById("meeting-cancel").style.display =
+  document.getElementById(
+    "meeting-cancel"
+  ).style.display =
     "none";
 
   if (clearMessage) {
-    document.getElementById("meeting-message").textContent =
-      "";
+    document.getElementById(
+      "meeting-message"
+    ).textContent = "";
   }
 }
 
+
+/* =========================================================
+   DELETE MEETING
+========================================================= */
 
 async function deleteMeeting(id) {
   const meeting =
     adminMeetings.find(
       item =>
-        String(item.id) === String(id)
+        String(item.id) ===
+        String(id)
     );
 
-  if (!meeting) return;
+  if (!meeting) {
+    return;
+  }
 
   const confirmed =
     window.confirm(
       `Delete "${meeting.title}"?\n\nThis cannot be undone.`
     );
 
-  if (!confirmed) return;
+  if (!confirmed) {
+    return;
+  }
 
   try {
     const response =
-      await fetch(`/api/meetings/${id}`, {
-        method: "DELETE"
-      });
+      await fetch(
+        `/api/meetings/${id}`,
+        {
+          method: "DELETE"
+        }
+      );
 
     const result =
       await response.json();
 
-    if (response.status === 401) {
+    if (
+      response.status === 401
+    ) {
       showLogin();
       return;
     }
@@ -772,10 +902,12 @@ async function deleteMeeting(id) {
         result.error ||
         "Could not delete the meeting."
       );
+
       return;
     }
 
     resetMeetingForm();
+
     await loadAdminMeetings();
 
   } catch (error) {
@@ -788,13 +920,20 @@ async function deleteMeeting(id) {
 }
 
 
+/* =========================================================
+   REFRESH MEETINGS
+========================================================= */
+
 document
-  .getElementById("refresh-meetings")
-  .addEventListener("click", () => {
-    loadAdminMeetings();
-  });
-
-
+  .getElementById(
+    "refresh-admin-meetings"
+  )
+  .addEventListener(
+    "click",
+    () => {
+      loadAdminMeetings();
+    }
+  );
 /* =========================================================
    BOARD MEMBERS
 ========================================================= */
@@ -822,88 +961,146 @@ async function loadAdminBoardMembers() {
 
     adminBoardMembers = data;
 
+    updateDashboardSummaries();
+
     if (!data.length) {
       box.innerHTML = `
         <p class="muted">
           No board members have been added yet.
         </p>
       `;
+
       return;
     }
 
-    box.innerHTML = data.map(member => `
-      <div class="admin-board-item">
+    box.innerHTML = `
+      <div class="admin-board-grid">
 
-        ${
-          member.photo_url
-            ? `
-              <img
-                class="admin-board-photo"
-                src="${escapeAttribute(member.photo_url)}"
-                alt="${escapeAttribute(member.name)}"
-              >
-            `
-            : `
-              <div class="admin-board-photo placeholder-photo">
-                ${getInitials(member.name)}
+        ${data.map(member => `
+          <article class="admin-board-member-card">
+
+            <div class="admin-board-photo-wrap">
+
+              ${
+                member.photo_url
+                  ? `
+                    <img
+                      class="admin-board-photo"
+                      src="${escapeAttribute(
+                        member.photo_url
+                      )}"
+                      alt="${escapeAttribute(
+                        member.name
+                      )}"
+                    >
+                  `
+                  : `
+                    <div
+                      class="
+                        admin-board-photo
+                        admin-board-photo-placeholder
+                      "
+                    >
+                      ${getInitials(member.name)}
+                    </div>
+                  `
+              }
+
+            </div>
+
+            <div class="admin-board-member-info">
+
+              <h4>
+                ${escapeHtml(member.name)}
+              </h4>
+
+              <div class="admin-board-position">
+                ${escapeHtml(
+                  member.position_title
+                )}
               </div>
-            `
-        }
 
-        <div class="admin-board-info">
+              ${
+                member.description
+                  ? `
+                    <p>
+                      ${escapeHtml(
+                        member.description
+                      )}
+                    </p>
+                  `
+                  : ""
+              }
 
-          <strong>
-            ${escapeHtml(member.name)}
-          </strong>
+              <div class="admin-board-order">
+                Display order:
+                ${escapeHtml(
+                  member.display_order ?? 0
+                )}
+              </div>
 
-          <div class="small">
-            ${escapeHtml(member.position_title)}
-          </div>
+              <div class="session-actions">
 
-          <div class="small">
-            Display order:
-            ${escapeHtml(member.display_order)}
-          </div>
+                <button
+                  type="button"
+                  class="btn secondary edit-board-member"
+                  data-id="${member.id}"
+                >
+                  Edit
+                </button>
 
-        </div>
+                <button
+                  type="button"
+                  class="btn danger delete-board-member"
+                  data-id="${member.id}"
+                >
+                  Delete
+                </button>
 
-        <div class="session-actions">
+              </div>
 
-          <button
-            type="button"
-            class="btn secondary edit-board-member"
-            data-id="${member.id}"
-          >
-            Edit
-          </button>
+            </div>
 
-          <button
-            type="button"
-            class="btn danger delete-board-member"
-            data-id="${member.id}"
-          >
-            Delete
-          </button>
-
-        </div>
+          </article>
+        `).join("")}
 
       </div>
-    `).join("");
+    `;
+
 
     document
-      .querySelectorAll(".edit-board-member")
+      .querySelectorAll(
+        ".edit-board-member"
+      )
       .forEach(button => {
-        button.addEventListener("click", () => {
-          startEditingBoardMember(button.dataset.id);
-        });
+
+        button.addEventListener(
+          "click",
+          () => {
+            startEditingBoardMember(
+              button.dataset.id
+            );
+          }
+        );
+
       });
 
+
     document
-      .querySelectorAll(".delete-board-member")
+      .querySelectorAll(
+        ".delete-board-member"
+      )
       .forEach(button => {
-        button.addEventListener("click", () => {
-          deleteBoardMember(button.dataset.id);
-        });
+
+        button.addEventListener(
+          "click",
+          () => {
+            deleteBoardMember(
+              button.dataset.id
+            );
+          }
+        );
+
       });
 
   } catch (error) {
@@ -918,147 +1115,176 @@ async function loadAdminBoardMembers() {
 }
 
 
+/* =========================================================
+   ADD / UPDATE BOARD MEMBER
+========================================================= */
+
 document
   .getElementById("board-form")
-  .addEventListener("submit", async e => {
-    e.preventDefault();
+  .addEventListener(
+    "submit",
+    async e => {
 
-    const form =
-      e.currentTarget;
+      e.preventDefault();
 
-    const message =
-      document.getElementById("board-message");
+      const form =
+        e.currentTarget;
 
-    const id =
-      document.getElementById("board-id").value;
+      const message =
+        document.getElementById(
+          "board-message"
+        );
 
-    const formData =
-      new FormData(form);
+      const id =
+        document.getElementById(
+          "board-id"
+        ).value;
 
-    const isEditing =
-      Boolean(id);
+      const formData =
+        new FormData(form);
 
-    const url =
-      isEditing
-        ? `/api/board-members/${id}`
-        : "/api/board-members";
+      const isEditing =
+        Boolean(id);
 
-    const method =
-      isEditing
-        ? "PUT"
-        : "POST";
+      const url =
+        isEditing
+          ? `/api/board-members/${id}`
+          : "/api/board-members";
 
-    message.textContent =
-      isEditing
-        ? "Updating board member..."
-        : "Adding board member...";
-
-    try {
-      const response =
-        await fetch(url, {
-          method,
-          body: formData
-        });
-
-      const result =
-        await response.json();
-
-      if (response.status === 401) {
-        showLogin();
-        return;
-      }
-
-      if (!response.ok) {
-        message.textContent =
-          result.error ||
-          "Could not save the board member.";
-
-        return;
-      }
+      const method =
+        isEditing
+          ? "PUT"
+          : "POST";
 
       message.textContent =
         isEditing
-          ? "Board member updated."
-          : "Board member added.";
+          ? "Updating board member..."
+          : "Adding board member...";
 
-      resetBoardForm(false);
+      try {
+        const response =
+          await fetch(
+            url,
+            {
+              method,
+              body: formData
+            }
+          );
 
-      await loadAdminBoardMembers();
+        const result =
+          await response.json();
 
-    } catch (error) {
-      console.error(error);
+        if (
+          response.status === 401
+        ) {
+          showLogin();
+          return;
+        }
 
-      message.textContent =
-        "Unable to communicate with the server.";
+        if (!response.ok) {
+          message.textContent =
+            result.error ||
+            "Something went wrong.";
+
+          return;
+        }
+
+        message.textContent =
+          isEditing
+            ? "Board member updated."
+            : "Board member added.";
+
+        resetBoardForm(false);
+
+        await loadAdminBoardMembers();
+
+      } catch (error) {
+        console.error(error);
+
+        message.textContent =
+          "Unable to communicate with the server.";
+      }
     }
-  });
+  );
 
+
+/* =========================================================
+   EDIT BOARD MEMBER
+========================================================= */
 
 function startEditingBoardMember(id) {
   const member =
     adminBoardMembers.find(
       item =>
-        String(item.id) === String(id)
+        String(item.id) ===
+        String(id)
     );
 
-  if (!member) return;
-
-  document.getElementById("board-id").value =
-    member.id;
-
-  document.getElementById("board-name").value =
-    member.name || "";
-
-  document.getElementById("board-position").value =
-    member.position_title || "";
-
-  document.getElementById("board-description").value =
-    member.description || "";
-
-  document.getElementById("board-order").value =
-    member.display_order ?? 0;
-
-  document.getElementById("board-photo").value =
-    "";
-
-  document.getElementById("board-form-title").textContent =
-    "Edit Board Member";
-
-  document.getElementById("board-submit").textContent =
-    "Update Board Member";
-
-  document.getElementById("board-cancel").style.display =
-    "inline-flex";
-
-  document.getElementById("board-message").textContent =
-    "Editing existing board member.";
-
-  const photoBox =
-    document.getElementById("board-current-photo");
-
-  if (member.photo_url) {
-    photoBox.innerHTML = `
-      <p class="small">Current photo:</p>
-
-      <img
-        class="board-edit-preview"
-        src="${escapeAttribute(member.photo_url)}"
-        alt="${escapeAttribute(member.name)}"
-      >
-
-      <p class="small">
-        Choose a new photo above only if you want to replace it.
-      </p>
-    `;
-  } else {
-    photoBox.innerHTML = `
-      <p class="small">
-        This board member does not currently have a photo.
-      </p>
-    `;
+  if (!member) {
+    return;
   }
 
-  document.getElementById("board-form")
+  document.getElementById(
+    "board-id"
+  ).value =
+    member.id;
+
+  document.getElementById(
+    "board-name"
+  ).value =
+    member.name || "";
+
+  document.getElementById(
+    "board-position"
+  ).value =
+    member.position_title || "";
+
+  document.getElementById(
+    "board-description"
+  ).value =
+    member.description || "";
+
+  document.getElementById(
+    "board-order"
+  ).value =
+    member.display_order ?? 0;
+
+  /*
+    Browsers do not allow JavaScript
+    to pre-populate a file input.
+
+    If the admin does not select a new
+    image, the existing image remains.
+  */
+
+  document.getElementById(
+    "board-photo"
+  ).value = "";
+
+  document.getElementById(
+    "board-form-title"
+  ).textContent =
+    "Edit Board Member";
+
+  document.getElementById(
+    "board-submit"
+  ).textContent =
+    "Update Board Member";
+
+  document.getElementById(
+    "board-cancel"
+  ).style.display =
+    "inline-flex";
+
+  document.getElementById(
+    "board-message"
+  ).textContent =
+    "Editing existing board member. Leave the photo blank to keep the current photo.";
+
+  document
+    .getElementById(
+      "board-form"
+    )
     .scrollIntoView({
       behavior: "smooth",
       block: "start"
@@ -1066,58 +1292,84 @@ function startEditingBoardMember(id) {
 }
 
 
+/* =========================================================
+   CANCEL BOARD EDIT
+========================================================= */
+
 document
   .getElementById("board-cancel")
-  .addEventListener("click", () => {
-    resetBoardForm();
-  });
+  .addEventListener(
+    "click",
+    () => {
+      resetBoardForm();
+    }
+  );
 
 
-function resetBoardForm(clearMessage = true) {
+/* =========================================================
+   RESET BOARD FORM
+========================================================= */
+
+function resetBoardForm(
+  clearMessage = true
+) {
   document
-    .getElementById("board-form")
+    .getElementById(
+      "board-form"
+    )
     .reset();
 
-  document.getElementById("board-id").value =
-    "";
+  document.getElementById(
+    "board-id"
+  ).value = "";
 
-  document.getElementById("board-order").value =
-    "0";
-
-  document.getElementById("board-current-photo").innerHTML =
-    "";
-
-  document.getElementById("board-form-title").textContent =
+  document.getElementById(
+    "board-form-title"
+  ).textContent =
     "Add Board Member";
 
-  document.getElementById("board-submit").textContent =
+  document.getElementById(
+    "board-submit"
+  ).textContent =
     "Add Board Member";
 
-  document.getElementById("board-cancel").style.display =
+  document.getElementById(
+    "board-cancel"
+  ).style.display =
     "none";
 
   if (clearMessage) {
-    document.getElementById("board-message").textContent =
-      "";
+    document.getElementById(
+      "board-message"
+    ).textContent = "";
   }
 }
 
+
+/* =========================================================
+   DELETE BOARD MEMBER
+========================================================= */
 
 async function deleteBoardMember(id) {
   const member =
     adminBoardMembers.find(
       item =>
-        String(item.id) === String(id)
+        String(item.id) ===
+        String(id)
     );
 
-  if (!member) return;
+  if (!member) {
+    return;
+  }
 
   const confirmed =
     window.confirm(
-      `Delete ${member.name} from the board?\n\nThis will also remove their stored photo.`
+      `Delete "${member.name}"?\n\nThis will also remove the board member's stored photo.`
     );
 
-  if (!confirmed) return;
+  if (!confirmed) {
+    return;
+  }
 
   try {
     const response =
@@ -1131,7 +1383,9 @@ async function deleteBoardMember(id) {
     const result =
       await response.json();
 
-    if (response.status === 401) {
+    if (
+      response.status === 401
+    ) {
       showLogin();
       return;
     }
@@ -1159,18 +1413,165 @@ async function deleteBoardMember(id) {
 }
 
 
-document
-  .getElementById("refresh-board")
-  .addEventListener("click", () => {
-    loadAdminBoardMembers();
-  });
+/* =========================================================
+   REFRESH BOARD MEMBERS
+========================================================= */
 
+document
+  .getElementById(
+    "refresh-board"
+  )
+  .addEventListener(
+    "click",
+    () => {
+      loadAdminBoardMembers();
+    }
+  );
+
+
+/* =========================================================
+   ROSTER UPLOAD
+========================================================= */
+
+document
+  .getElementById("roster-form")
+  .addEventListener(
+    "submit",
+    async e => {
+
+      e.preventDefault();
+
+      const form =
+        e.currentTarget;
+
+      const message =
+        document.getElementById(
+          "roster-message"
+        );
+
+      const fileInput =
+        form.querySelector(
+          'input[name="file"]'
+        );
+
+      if (
+        !fileInput ||
+        !fileInput.files.length
+      ) {
+        message.textContent =
+          "Please select an Excel file.";
+
+        return;
+      }
+
+      const file =
+        fileInput.files[0];
+
+      const extension =
+        file.name
+          .split(".")
+          .pop()
+          .toLowerCase();
+
+      if (
+        extension !== "xlsx" &&
+        extension !== "xls"
+      ) {
+        message.textContent =
+          "Please select an Excel .xlsx or .xls file.";
+
+        return;
+      }
+
+      const formData =
+        new FormData(form);
+
+      message.textContent =
+        "Uploading roster...";
+
+      try {
+        const response =
+          await fetch(
+            "/api/roster",
+            {
+              method: "POST",
+              body: formData
+            }
+          );
+
+        const result =
+          await response.json();
+
+        if (
+          response.status === 401
+        ) {
+          showLogin();
+          return;
+        }
+
+        if (!response.ok) {
+          message.textContent =
+            result.error ||
+            "Roster upload failed.";
+
+          return;
+        }
+
+        message.textContent =
+          `Roster uploaded successfully. ${result.count || 0} rows were imported.`;
+
+        form.reset();
+
+        updateRosterDashboardStatus(
+          file.name,
+          result.count
+        );
+
+      } catch (error) {
+        console.error(error);
+
+        message.textContent =
+          "Unable to communicate with the server.";
+      }
+    }
+  );
+
+
+/* =========================================================
+   ROSTER DASHBOARD STATUS
+========================================================= */
+
+function updateRosterDashboardStatus(
+  filename,
+  count
+) {
+  const filenameElement =
+    document.getElementById(
+      "dashboard-roster-file"
+    );
+
+  const countElement =
+    document.getElementById(
+      "dashboard-roster-count"
+    );
+
+  if (filenameElement) {
+    filenameElement.textContent =
+      filename || "Uploaded";
+  }
+
+  if (countElement) {
+    countElement.textContent =
+      Number.isFinite(Number(count))
+        ? `${count} officials`
+        : "Roster available";
+  }
+}
 /* =========================================================
    MEMBER DOCUMENTS
 ========================================================= */
 
 async function loadAdminDocuments() {
-
   const box =
     document.getElementById(
       "admin-document-list"
@@ -1178,43 +1579,35 @@ async function loadAdminDocuments() {
 
   if (!box) return;
 
-
   box.innerHTML =
     '<div class="loading">Loading documents...</div>';
 
-
   try {
-
     const response =
-      await fetch(
-        "/api/documents"
-      );
-
+      await fetch("/api/documents");
 
     const data =
       await response.json();
 
-
-    if (response.status === 401) {
+    if (
+      response.status === 401
+    ) {
       showLogin();
       return;
     }
 
-
     if (!response.ok) {
-
       throw new Error(
         data.error ||
         "Unable to load documents."
       );
     }
 
-
     adminDocuments = data;
 
+    updateDashboardSummaries();
 
     if (!data.length) {
-
       box.innerHTML = `
         <p class="muted">
           No member documents have been uploaded yet.
@@ -1223,7 +1616,6 @@ async function loadAdminDocuments() {
 
       return;
     }
-
 
     box.innerHTML =
       data.map(documentItem => `
@@ -1236,35 +1628,34 @@ async function loadAdminDocuments() {
               ${escapeHtml(documentItem.title)}
             </strong>
 
-
             <div class="small">
               ${escapeHtml(documentItem.category)}
             </div>
-
 
             <div class="small">
               ${escapeHtml(documentItem.filename)}
             </div>
 
-
             ${
               documentItem.description
                 ? `
                     <div class="small">
-                      ${escapeHtml(documentItem.description)}
+                      ${escapeHtml(
+                        documentItem.description
+                      )}
                     </div>
                   `
                 : ""
             }
 
-
             <div class="small">
               Display order:
-              ${escapeHtml(documentItem.display_order)}
+              ${escapeHtml(
+                documentItem.display_order
+              )}
             </div>
 
           </div>
-
 
           <div class="session-actions">
 
@@ -1275,7 +1666,6 @@ async function loadAdminDocuments() {
             >
               Edit
             </button>
-
 
             <button
               type="button"
@@ -1291,7 +1681,6 @@ async function loadAdminDocuments() {
 
       `).join("");
 
-
     document
       .querySelectorAll(
         ".edit-document"
@@ -1301,16 +1690,13 @@ async function loadAdminDocuments() {
         button.addEventListener(
           "click",
           () => {
-
             startEditingDocument(
               button.dataset.id
             );
-
           }
         );
 
       });
-
 
     document
       .querySelectorAll(
@@ -1321,28 +1707,22 @@ async function loadAdminDocuments() {
         button.addEventListener(
           "click",
           () => {
-
             deleteDocument(
               button.dataset.id
             );
-
           }
         );
 
       });
 
-
   } catch (error) {
-
     console.error(error);
-
 
     box.innerHTML = `
       <div class="loading">
         Unable to load documents.
       </div>
     `;
-
   }
 }
 
@@ -1352,84 +1732,73 @@ async function loadAdminDocuments() {
 ========================================================= */
 
 document
-  .getElementById("document-form")
+  .getElementById(
+    "document-form"
+  )
   .addEventListener(
     "submit",
     async e => {
 
       e.preventDefault();
 
-
       const form =
         e.currentTarget;
-
 
       const message =
         document.getElementById(
           "document-message"
         );
 
-
       const id =
         document.getElementById(
           "document-id"
         ).value;
-
 
       const fileInput =
         document.getElementById(
           "document-file"
         );
 
-
       const isEditing =
         Boolean(id);
 
-
       /*
-        A file is required when creating
-        a brand-new document.
+        A file is required for a new
+        document.
 
-        When editing, the existing file
-        may be retained.
+        When editing, leaving the file
+        blank keeps the current file.
       */
 
       if (
         !isEditing &&
         !fileInput.files.length
       ) {
-
         message.textContent =
           "Please select a document to upload.";
 
         return;
       }
 
-
       const formData =
         new FormData(form);
-
 
       const url =
         isEditing
           ? `/api/documents/${id}`
           : "/api/documents";
 
-
       const method =
         isEditing
           ? "PUT"
           : "POST";
-
 
       message.textContent =
         isEditing
           ? "Updating document..."
           : "Uploading document...";
 
-
       try {
-
         const response =
           await fetch(
             url,
@@ -1439,22 +1808,17 @@ document
             }
           );
 
-
         const result =
           await response.json();
-
 
         if (
           response.status === 401
         ) {
-
           showLogin();
           return;
         }
 
-
         if (!response.ok) {
-
           message.textContent =
             result.error ||
             "Could not save the document.";
@@ -1462,29 +1826,21 @@ document
           return;
         }
 
-
         message.textContent =
           isEditing
             ? "Document updated."
             : "Document uploaded.";
 
-
         resetDocumentForm(false);
-
 
         await loadAdminDocuments();
 
-
       } catch (error) {
-
         console.error(error);
-
 
         message.textContent =
           "Unable to communicate with the server.";
-
       }
-
     }
   );
 
@@ -1494,7 +1850,6 @@ document
 ========================================================= */
 
 function startEditingDocument(id) {
-
   const documentItem =
     adminDocuments.find(
       item =>
@@ -1502,21 +1857,19 @@ function startEditingDocument(id) {
         String(id)
     );
 
-
-  if (!documentItem) return;
-
+  if (!documentItem) {
+    return;
+  }
 
   document.getElementById(
     "document-id"
   ).value =
     documentItem.id;
 
-
   document.getElementById(
     "document-title"
   ).value =
     documentItem.title || "";
-
 
   document.getElementById(
     "document-category"
@@ -1524,48 +1877,39 @@ function startEditingDocument(id) {
     documentItem.category ||
     "Chapter Documents";
 
-
   document.getElementById(
     "document-description"
   ).value =
     documentItem.description || "";
-
 
   document.getElementById(
     "document-order"
   ).value =
     documentItem.display_order ?? 0;
 
-
   document.getElementById(
     "document-file"
-  ).value =
-    "";
-
+  ).value = "";
 
   document.getElementById(
     "document-form-title"
   ).textContent =
     "Edit Member Document";
 
-
   document.getElementById(
     "document-submit"
   ).textContent =
     "Update Document";
-
 
   document.getElementById(
     "document-cancel"
   ).style.display =
     "inline-flex";
 
-
   document.getElementById(
     "document-message"
   ).textContent =
     "Editing existing document.";
-
 
   document.getElementById(
     "document-current-file"
@@ -1574,8 +1918,11 @@ function startEditingDocument(id) {
     <p class="small">
 
       Current file:
+
       <strong>
-        ${escapeHtml(documentItem.filename)}
+        ${escapeHtml(
+          documentItem.filename
+        )}
       </strong>
 
     </p>
@@ -1588,7 +1935,6 @@ function startEditingDocument(id) {
 
   `;
 
-
   document
     .getElementById(
       "document-form"
@@ -1597,7 +1943,6 @@ function startEditingDocument(id) {
       behavior: "smooth",
       block: "start"
     });
-
 }
 
 
@@ -1612,9 +1957,7 @@ document
   .addEventListener(
     "click",
     () => {
-
       resetDocumentForm();
-
     }
   );
 
@@ -1626,59 +1969,44 @@ document
 function resetDocumentForm(
   clearMessage = true
 ) {
-
   document
     .getElementById(
       "document-form"
     )
     .reset();
 
-
   document.getElementById(
     "document-id"
-  ).value =
-    "";
-
+  ).value = "";
 
   document.getElementById(
     "document-order"
-  ).value =
-    "0";
-
+  ).value = "0";
 
   document.getElementById(
     "document-current-file"
-  ).innerHTML =
-    "";
-
+  ).innerHTML = "";
 
   document.getElementById(
     "document-form-title"
   ).textContent =
     "Add Member Document";
 
-
   document.getElementById(
     "document-submit"
   ).textContent =
     "Upload Document";
-
 
   document.getElementById(
     "document-cancel"
   ).style.display =
     "none";
 
-
   if (clearMessage) {
-
     document.getElementById(
       "document-message"
-    ).textContent =
-      "";
-
+    ).textContent = "";
   }
-
 }
 
 
@@ -1687,7 +2015,6 @@ function resetDocumentForm(
 ========================================================= */
 
 async function deleteDocument(id) {
-
   const documentItem =
     adminDocuments.find(
       item =>
@@ -1695,9 +2022,9 @@ async function deleteDocument(id) {
         String(id)
     );
 
-
-  if (!documentItem) return;
-
+  if (!documentItem) {
+    return;
+  }
 
   const confirmed =
     window.confirm(
@@ -1706,12 +2033,11 @@ async function deleteDocument(id) {
       `This cannot be undone.`
     );
 
-
-  if (!confirmed) return;
-
+  if (!confirmed) {
+    return;
+  }
 
   try {
-
     const response =
       await fetch(
         `/api/documents/${id}`,
@@ -1720,22 +2046,17 @@ async function deleteDocument(id) {
         }
       );
 
-
     const result =
       await response.json();
-
 
     if (
       response.status === 401
     ) {
-
       showLogin();
       return;
     }
 
-
     if (!response.ok) {
-
       alert(
         result.error ||
         "Could not delete the document."
@@ -1744,24 +2065,17 @@ async function deleteDocument(id) {
       return;
     }
 
-
     resetDocumentForm();
-
 
     await loadAdminDocuments();
 
-
   } catch (error) {
-
     console.error(error);
-
 
     alert(
       "Unable to communicate with the server."
     );
-
   }
-
 }
 
 
@@ -1776,98 +2090,248 @@ document
   .addEventListener(
     "click",
     () => {
-
       loadAdminDocuments();
-
     }
   );
 
+
 /* =========================================================
-   ROSTER UPLOAD
+   ADMIN DASHBOARD
+========================================================= */
+
+function updateDashboardSummaries() {
+  const values = {
+
+    "dashboard-training-count":
+      Array.isArray(adminSessions)
+        ? adminSessions.length
+        : 0,
+
+    "dashboard-meeting-count":
+      Array.isArray(adminMeetings)
+        ? adminMeetings.length
+        : 0,
+
+    "dashboard-board-count":
+      Array.isArray(adminBoardMembers)
+        ? adminBoardMembers.length
+        : 0,
+
+    "dashboard-document-count":
+      Array.isArray(adminDocuments)
+        ? adminDocuments.length
+        : 0
+
+  };
+
+  Object.entries(
+    values
+  ).forEach(
+    ([id, value]) => {
+
+      const element =
+        document.getElementById(id);
+
+      if (element) {
+        element.textContent =
+          value;
+      }
+
+    }
+  );
+}
+
+
+/* =========================================================
+   ADMIN TAB NAVIGATION
+========================================================= */
+
+function openAdminTab(
+  tabName
+) {
+  document
+    .querySelectorAll(
+      ".admin-tab"
+    )
+    .forEach(button => {
+
+      const active =
+        button.dataset.adminTab ===
+        tabName;
+
+      button.classList.toggle(
+        "active",
+        active
+      );
+
+      button.setAttribute(
+        "aria-selected",
+        String(active)
+      );
+
+    });
+
+
+  document
+    .querySelectorAll(
+      ".admin-tab-panel"
+    )
+    .forEach(panel => {
+
+      const active =
+        panel.dataset.adminPanel ===
+        tabName;
+
+      panel.classList.toggle(
+        "active",
+        active
+      );
+
+    });
+
+
+  try {
+    sessionStorage.setItem(
+      "scpaAdminTab",
+      tabName
+    );
+  } catch {}
+
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth"
+  });
+}
+
+
+/* =========================================================
+   MAIN ADMIN TAB BUTTONS
 ========================================================= */
 
 document
-  .getElementById("roster-form")
-  .addEventListener("submit", async e => {
-    e.preventDefault();
+  .querySelectorAll(
+    ".admin-tab"
+  )
+  .forEach(button => {
 
-    const form =
-      e.currentTarget;
+    button.addEventListener(
+      "click",
+      () => {
 
-    const message =
-      document.getElementById(
-        "roster-message"
-      );
-
-    const formData =
-      new FormData(form);
-
-    message.textContent =
-      "Uploading roster...";
-
-    try {
-      const response =
-        await fetch(
-          "/api/roster",
-          {
-            method: "POST",
-            body: formData
-          }
+        openAdminTab(
+          button.dataset.adminTab
         );
 
-      const result =
-        await response.json();
-
-      if (response.status === 401) {
-        showLogin();
-        return;
       }
+    );
 
-      if (!response.ok) {
-        message.textContent =
-          result.error ||
-          "Something went wrong.";
-
-        return;
-      }
-
-      message.textContent =
-        `Roster uploaded: ${result.count} rows.`;
-
-      form.reset();
-
-    } catch (error) {
-      console.error(error);
-
-      message.textContent =
-        "Unable to communicate with the server.";
-    }
   });
+
+
+/* =========================================================
+   DASHBOARD QUICK LINKS
+========================================================= */
+
+document
+  .querySelectorAll(
+    "[data-go-tab]"
+  )
+  .forEach(button => {
+
+    button.addEventListener(
+      "click",
+      () => {
+
+        openAdminTab(
+          button.dataset.goTab
+        );
+
+      }
+    );
+
+  });
+
+
+/* =========================================================
+   RESTORE LAST ADMIN TAB
+========================================================= */
+
+try {
+  const savedAdminTab =
+    sessionStorage.getItem(
+      "scpaAdminTab"
+    );
+
+  if (
+    savedAdminTab &&
+    document.querySelector(
+      `[data-admin-panel="${savedAdminTab}"]`
+    )
+  ) {
+    openAdminTab(
+      savedAdminTab
+    );
+  }
+
+} catch {}
 
 
 /* =========================================================
    HELPERS
 ========================================================= */
 
-function normalizeDateForInput(value) {
-  if (!value) return "";
+function normalizeDateForInput(
+  value
+) {
+  if (!value) {
+    return "";
+  }
 
-  return String(value).substring(0, 10);
+  return String(value)
+    .substring(
+      0,
+      10
+    );
 }
 
 
-function formatDate(value) {
-  if (!value) return "";
+function normalizeTimeForInput(
+  value
+) {
+  if (!value) {
+    return "";
+  }
+
+  return String(value)
+    .substring(
+      0,
+      5
+    );
+}
+
+
+function formatDate(
+  value
+) {
+  if (!value) {
+    return "";
+  }
 
   const dateOnly =
-    String(value).substring(0, 10);
+    String(value)
+      .substring(
+        0,
+        10
+      );
 
-  const d =
+  const date =
     new Date(
-      dateOnly + "T00:00:00"
+      dateOnly +
+      "T00:00:00"
     );
 
-  return d.toLocaleDateString(
+  return date.toLocaleDateString(
     undefined,
     {
       weekday: "short",
@@ -1879,17 +2343,25 @@ function formatDate(value) {
 }
 
 
-function formatTime(value) {
-  if (!value) return "";
+function formatTime(
+  value
+) {
+  if (!value) {
+    return "";
+  }
 
   const parts =
-    String(value).split(":");
+    String(value)
+      .split(":");
 
   let hour =
-    Number(parts[0]);
+    Number(
+      parts[0]
+    );
 
   const minutes =
-    parts[1] || "00";
+    parts[1] ||
+    "00";
 
   const suffix =
     hour >= 12
@@ -1897,44 +2369,71 @@ function formatTime(value) {
       : "AM";
 
   hour =
-    hour % 12 || 12;
+    hour % 12 ||
+    12;
 
   return `${hour}:${minutes} ${suffix}`;
 }
 
 
-function getInitials(name) {
-  return String(name || "")
+function getInitials(
+  name
+) {
+  return String(
+    name || ""
+  )
     .trim()
     .split(/\s+/)
-    .slice(0, 2)
-    .map(part => part.charAt(0).toUpperCase())
+    .slice(
+      0,
+      2
+    )
+    .map(
+      part =>
+        part
+          .charAt(0)
+          .toUpperCase()
+    )
     .join("");
 }
 
 
-function escapeHtml(value) {
-  return String(value ?? "")
+function escapeHtml(
+  value
+) {
+  return String(
+    value ?? ""
+  )
     .replace(
       /[&<>"']/g,
-      m => ({
+      character => ({
+
         "&": "&amp;",
+
         "<": "&lt;",
+
         ">": "&gt;",
+
         '"': "&quot;",
+
         "'": "&#039;"
-      }[m])
+
+      }[character])
     );
 }
 
 
-function escapeAttribute(value) {
-  return escapeHtml(value);
+function escapeAttribute(
+  value
+) {
+  return escapeHtml(
+    value
+  );
 }
 
 
 /* =========================================================
-   START
+   START ADMIN PORTAL
 ========================================================= */
 
 checkAdminStatus();
