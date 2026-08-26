@@ -767,7 +767,11 @@
         </a>
 
 
-        <div class="member-resource-card coming-soon">
+        <a
+          class="member-resource-card"
+          href="#member-training-resources"
+          id="open-training-resources-card"
+        >
 
           <div class="member-resource-icon">
             🎓
@@ -783,10 +787,10 @@
           </p>
 
           <span>
-            Coming Soon
+            Open Training Resources ↓
           </span>
 
-        </div>
+        </a>
 
 
         <div class="member-resource-card coming-soon">
@@ -1014,6 +1018,66 @@
 
       </div>
 
+
+      <!-- ==================================================
+           TRAINING RESOURCES
+      ================================================== -->
+
+      <div
+        id="member-training-resources"
+        class="member-documents-section"
+        style="display:none;"
+      >
+
+        <div class="member-section-actions">
+          <button
+            type="button"
+            class="btn secondary member-close-button"
+            id="close-training-resources-section"
+          >
+            Close Training Resources
+          </button>
+        </div>
+
+        <div class="member-roster-heading">
+          <div>
+            <p class="eyebrow">Education &amp; Development</p>
+            <h3>Training Resources</h3>
+          </div>
+          <div id="training-resources-meta"></div>
+        </div>
+
+        <div class="documents-toolbar">
+          <label>
+            Search Training Resources
+            <input
+              type="search"
+              id="training-resources-search"
+              placeholder="Search training materials..."
+            >
+          </label>
+
+          <label>
+            Resource Type
+            <select id="training-resources-category">
+              <option value="">All Training Resources</option>
+              <option value="Training Resources">Training Resources</option>
+              <option value="Rules &amp; Mechanics">Rules &amp; Mechanics</option>
+            </select>
+          </label>
+        </div>
+
+        <div
+          id="training-resources-list"
+          class="documents-grid"
+        >
+          <div class="loading">
+            Loading training resources...
+          </div>
+        </div>
+
+      </div>
+
     </div>
 
   </div>
@@ -1099,7 +1163,7 @@
      PUBLIC JAVASCRIPT
 ====================================================== -->
 
-<script src="/app.js?v=6"></script>
+<script src="/app.js?v=7"></script>
 
 
 </body>
