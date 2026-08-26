@@ -926,7 +926,7 @@ async function deleteMeeting(id) {
 
 document
   .getElementById(
-    "refresh-admin-meetings"
+    "refresh-meetings"
   )
   .addEventListener(
     "click",
