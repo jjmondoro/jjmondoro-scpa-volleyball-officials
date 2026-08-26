@@ -206,14 +206,14 @@ nav .admin-link{
     linear-gradient(
       90deg,
       rgba(16,35,63,.97) 0%,
-      rgba(16,35,63,.91) 42%,
-      rgba(16,35,63,.78) 70%,
+      rgba(16,35,63,.93) 35%,
+      rgba(16,35,63,.82) 65%,
       rgba(16,35,63,.72) 100%
     ),
-    url("/images/hero-volleyball.jpg");
+    url("/images/hero-volleyball.png");
 
   background-size:cover;
-  background-position:center;
+  background-position:center center;
   background-repeat:no-repeat;
 
   color:#fff;
@@ -226,13 +226,11 @@ nav .admin-link{
   position:absolute;
   inset:0;
 
-  background:
-    linear-gradient(
-      to bottom,
-      rgba(5,18,36,.05) 0%,
-      rgba(5,18,36,.10) 65%,
-      rgba(5,18,36,.28) 100%
-    );
+  background:linear-gradient(
+    to bottom,
+    rgba(5,18,36,.02),
+    rgba(5,18,36,.18)
+  );
 
   pointer-events:none;
 }
