@@ -452,7 +452,7 @@ async function deleteSession(id) {
 
 
 document
-  .getElementById("refresh-sessions")
+  .getElementById("refresh-admin-sessions")
   .addEventListener("click", () => {
     loadAdminSessions();
   });
