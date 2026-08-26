@@ -112,11 +112,10 @@ h2{
   flex-shrink:0;
 }
 
-.volleyball-logo{
-  width:32px;
-  height:32px;
-  display:block;
+.brand-mark i{
   color:#fff;
+  font-size:25px;
+  line-height:1;
 }
 
 .brand strong,
