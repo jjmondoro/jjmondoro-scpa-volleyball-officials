@@ -1,747 +1,331 @@
-```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Portal | South Central PA Volleyball Officials</title>
-  <link rel="stylesheet" href="/styles.css">
+  <link rel="stylesheet" href="/styles.css?v=8">
 </head>
-
 <body>
-
 <header class="site-header">
   <div class="container nav">
-    <div class="brand">
-      <div class="brand-mark">SC</div>
-      <div>
-        <strong>South Central PA</strong>
-        <span>Chapter of Volleyball Officials</span>
-      </div>
-    </div>
-
-    <nav>
-      <a href="/">Public Site</a>
-    </nav>
+    <div class="brand"><div class="brand-mark">SC</div><div><strong>South Central PA</strong><span>Chapter of Volleyball Officials</span></div></div>
+    <nav><a href="/">Public Site</a></nav>
   </div>
 </header>
-
 <main>
+<section class="section admin-section admin-dashboard-shell">
+<div class="container">
+  <div id="admin-login-panel" class="admin-login-wrap">
+    <form id="admin-login-form" class="admin-card admin-login-card">
+      <p class="eyebrow">Chapter Administration</p><h2>Admin Login</h2>
+      <p class="muted">Enter the chapter administrator password to continue.</p>
+      <label>Admin Password<input type="password" id="admin-login-password" required autocomplete="current-password"></label>
+      <button class="btn primary" type="submit">Log In</button>
+      <div class="form-message" id="admin-login-message"></div>
+    </form>
+  </div>
 
-<section class="section admin-section">
-
-  <div class="container">
-
-    <!-- LOGIN -->
-
-    <div id="admin-login-panel" class="admin-login-wrap">
-
-      <form id="admin-login-form" class="admin-card admin-login-card">
-
-        <p class="eyebrow">Chapter Administration</p>
-
-        <h2>Admin Login</h2>
-
-        <p class="muted">
-          Enter the chapter administrator password to continue.
-        </p>
-
-        <label>
-          Admin Password
-          <input
-            type="password"
-            id="admin-login-password"
-            required
-            autocomplete="current-password"
-          >
-        </label>
-
-        <button class="btn primary" type="submit">
-          Log In
-        </button>
-
-        <div
-          class="form-message"
-          id="admin-login-message"
-        ></div>
-
-      </form>
-
+  <div id="admin-portal" style="display:none;">
+    <div class="admin-portal-heading admin-dashboard-heading">
+      <div><p class="eyebrow">Chapter Administration</p><h2>Admin Portal</h2><p class="muted">Manage the chapter website from one place.</p></div>
+      <div class="admin-heading-actions"><a class="btn secondary" href="/">View Public Site</a><button class="btn secondary" type="button" id="admin-logout">Log Out</button></div>
     </div>
 
+    <div class="admin-tabbar" role="tablist" aria-label="Admin sections">
+      <button class="admin-tab active" type="button" data-admin-tab="dashboard">Dashboard</button>
+      <button class="admin-tab" type="button" data-admin-tab="training">Training</button>
+      <button class="admin-tab" type="button" data-admin-tab="meetings">Meetings</button>
+      <button class="admin-tab" type="button" data-admin-tab="board">Board</button>
+      <button class="admin-tab" type="button" data-admin-tab="roster">Roster</button>
+      <button class="admin-tab" type="button" data-admin-tab="documents">Documents</button>
+    </div>
 
-    <!-- ADMIN PORTAL -->
-
-    <div id="admin-portal" style="display:none;">
-
-      <div class="admin-portal-heading">
-
-        <div>
-          <p class="eyebrow">Chapter Administration</p>
-          <h2>Admin Portal</h2>
-          <p class="muted">
-            Manage training, ratings, chapter meetings,
-            board members and the chapter roster.
-          </p>
-        </div>
-
-        <button
-          class="btn secondary"
-          type="button"
-          id="admin-logout"
-        >
-          Log Out
-        </button>
-
+    <section class="admin-tab-panel active" data-admin-panel="dashboard">
+      <div class="admin-welcome-card">
+        <div><p class="eyebrow">Overview</p><h3>Chapter Website Dashboard</h3><p>Choose an area below to update the information members and visitors see on the website.</p></div>
       </div>
+      <div class="admin-summary-grid">
+        <button type="button" class="admin-summary-card" data-go-tab="training"><span class="admin-summary-label">Training</span><strong id="dashboard-training-count">—</strong><small>sessions</small></button>
+        <button type="button" class="admin-summary-card" data-go-tab="meetings"><span class="admin-summary-label">Meetings</span><strong id="dashboard-meeting-count">—</strong><small>scheduled</small></button>
+        <button type="button" class="admin-summary-card" data-go-tab="board"><span class="admin-summary-label">Board</span><strong id="dashboard-board-count">—</strong><small>members</small></button>
+        <button type="button" class="admin-summary-card" data-go-tab="documents"><span class="admin-summary-label">Documents</span><strong id="dashboard-document-count">—</strong><small>files</small></button>
+      </div>
+      <div class="admin-quick-grid">
+        <button type="button" class="admin-quick-card" data-go-tab="training"><strong>Add Training / Rating</strong><span>Create or manage training sessions.</span></button>
+        <button type="button" class="admin-quick-card" data-go-tab="meetings"><strong>Manage Meetings</strong><span>Publish chapter meeting details and links.</span></button>
+        <button type="button" class="admin-quick-card" data-go-tab="roster"><strong>Update Roster</strong><span>Upload the latest chapter Excel roster.</span></button>
+        <button type="button" class="admin-quick-card" data-go-tab="documents"><strong>Member Documents</strong><span>Upload training resources, minutes and forms.</span></button>
+      </div>
+    </section>
 
-
-      <!-- ==================================================
-           TRAINING + ROSTER
-      ================================================== -->
-
-      <div class="admin-grid">
-
-        <form id="training-form" class="admin-card">
-
-          <h3 id="training-form-title">
+    <section class="admin-tab-panel" data-admin-panel="training"><div class="admin-panel-heading"><div><p class="eyebrow">Training</p><h3>Training &amp; Rating Sessions</h3></div></div><div class="admin-grid admin-grid-clean"><form class="admin-card" id="training-form">
+<h3 id="training-form-title">
             Add Training / Rating Session
           </h3>
-
-          <input
-            type="hidden"
-            id="training-id"
-          >
-
-          <label>
+<input id="training-id" type="hidden"/>
+<label>
             Title
-            <input
-              name="title"
-              id="training-title"
-              placeholder="NCAA Rules Training"
-              required
-            >
-          </label>
-
-          <label>
+            <input id="training-title" name="title" placeholder="NCAA Rules Training" required=""/>
+</label>
+<label>
             Date
-            <input
-              type="date"
-              name="date"
-              id="training-date"
-              required
-            >
-          </label>
-
-          <label>
+            <input id="training-date" name="date" required="" type="date"/>
+</label>
+<label>
             Type
-            <select
-              name="type"
-              id="training-type"
-            >
-              <option>Training</option>
-              <option>Rating Session</option>
-              <option>Clinic</option>
-            </select>
-          </label>
-
-          <label>
+            <select id="training-type" name="type">
+<option>Training</option>
+<option>Rating Session</option>
+<option>Clinic</option>
+</select>
+</label>
+<label>
             Location
-            <input
-              name="location"
-              id="training-location"
-              placeholder="Location / Online"
-            >
-          </label>
-
-          <label>
+            <input id="training-location" name="location" placeholder="Location / Online"/>
+</label>
+<label>
             Description
-            <textarea
-              name="description"
-              id="training-description"
-              rows="4"
-              placeholder="Details for chapter officials"
-            ></textarea>
-          </label>
-
-          <div class="admin-form-actions">
-
-            <button
-              class="btn primary"
-              id="training-submit"
-              type="submit"
-            >
+            <textarea id="training-description" name="description" placeholder="Details for chapter officials" rows="4"></textarea>
+</label>
+<div class="admin-form-actions">
+<button class="btn primary" id="training-submit" type="submit">
               Publish Session
             </button>
-
-            <button
-              class="btn secondary"
-              id="training-cancel"
-              type="button"
-              style="display:none;"
-            >
+<button class="btn secondary" id="training-cancel" style="display:none;" type="button">
               Cancel Edit
             </button>
-
+</div>
+<div class="form-message" id="training-message"></div>
+</form><div class="admin-card manage-sessions-card">
+<div class="manage-sessions-heading">
+<div>
+<p class="eyebrow">Session Management</p>
+<h3>Manage Training &amp; Rating Sessions</h3>
+</div>
+<button class="btn secondary" id="refresh-admin-sessions" type="button">
+            Refresh
+          </button>
+</div>
+<div id="admin-session-list">
+<div class="loading">
+            Loading sessions...
           </div>
-
-          <div
-            class="form-message"
-            id="training-message"
-          ></div>
-
-        </form>
-
-
-        <form id="roster-form" class="admin-card">
-
-          <h3>Upload Chapter Roster</h3>
-
-          <label>
+</div>
+</div></div></section>
+    <section class="admin-tab-panel" data-admin-panel="meetings"><div class="admin-panel-heading"><div><p class="eyebrow">Meetings</p><h3>Chapter Meetings</h3></div></div><div class="admin-grid admin-grid-clean"><form class="admin-card" id="meeting-form">
+<p class="eyebrow">Chapter Meetings</p>
+<h3 id="meeting-form-title">
+            Add Chapter Meeting
+          </h3>
+<input id="meeting-id" type="hidden"/>
+<label>
+            Meeting Title
+            <input id="meeting-title" name="title" placeholder="Fall Chapter Meeting" required=""/>
+</label>
+<label>
+            Date
+            <input id="meeting-date" name="meeting_date" required="" type="date"/>
+</label>
+<label>
+            Time
+            <input id="meeting-time" name="meeting_time" type="time"/>
+</label>
+<label>
+            Location
+            <input id="meeting-location" name="location" placeholder="Location / Online"/>
+</label>
+<label>
+            Meeting Link
+            <input id="meeting-link" name="meeting_link" placeholder="https://..." type="url"/>
+</label>
+<label>
+            Description
+            <textarea id="meeting-description" name="description" placeholder="Meeting agenda, details or notes" rows="4"></textarea>
+</label>
+<div class="admin-form-actions">
+<button class="btn primary" id="meeting-submit" type="submit">
+              Publish Meeting
+            </button>
+<button class="btn secondary" id="meeting-cancel" style="display:none;" type="button">
+              Cancel Edit
+            </button>
+</div>
+<div class="form-message" id="meeting-message"></div>
+</form><div class="admin-card">
+<p class="eyebrow">Meeting Management</p>
+<div class="manage-sessions-heading">
+<h3>Existing Chapter Meetings</h3>
+<button class="btn secondary" id="refresh-meetings" type="button">
+              Refresh
+            </button>
+</div>
+<div id="admin-meeting-list">
+<div class="loading">
+              Loading meetings...
+            </div>
+</div>
+</div></div></section>
+    <section class="admin-tab-panel" data-admin-panel="board"><div class="admin-panel-heading"><div><p class="eyebrow">Leadership</p><h3>Board Members</h3></div></div><div class="admin-grid admin-grid-clean"><form class="admin-card" enctype="multipart/form-data" id="board-form">
+<p class="eyebrow">Board Members</p>
+<h3 id="board-form-title">
+            Add Board Member
+          </h3>
+<input id="board-id" type="hidden"/>
+<label>
+            Name
+            <input id="board-name" name="name" placeholder="Official's Name" required=""/>
+</label>
+<label>
+            Position Title
+            <input id="board-position" name="position_title" placeholder="Chapter President" required=""/>
+</label>
+<label>
+            Photo
+            <input accept=".jpg,.jpeg,.png,.webp" id="board-photo" name="photo" type="file"/>
+</label>
+<p class="small">
+            JPG, PNG or WebP. Maximum file size: 5 MB.
+          </p>
+<div class="board-current-photo" id="board-current-photo"></div>
+<label>
+            Responsibilities
+            <textarea id="board-description" name="description" placeholder="Brief description of this board member's responsibilities" rows="5"></textarea>
+</label>
+<label>
+            Display Order
+            <input id="board-order" min="0" name="display_order" type="number" value="0"/>
+</label>
+<p class="small">
+            Lower numbers appear first on the public website.
+          </p>
+<div class="admin-form-actions">
+<button class="btn primary" id="board-submit" type="submit">
+              Add Board Member
+            </button>
+<button class="btn secondary" id="board-cancel" style="display:none;" type="button">
+              Cancel Edit
+            </button>
+</div>
+<div class="form-message" id="board-message"></div>
+</form><div class="admin-card">
+<p class="eyebrow">Board Management</p>
+<div class="manage-sessions-heading">
+<h3>Current Board Members</h3>
+<button class="btn secondary" id="refresh-board" type="button">
+              Refresh
+            </button>
+</div>
+<div id="admin-board-list">
+<div class="loading">
+              Loading board members...
+            </div>
+</div>
+</div></div></section>
+    <section class="admin-tab-panel" data-admin-panel="roster"><div class="admin-panel-heading"><div><p class="eyebrow">Members</p><h3>Chapter Roster</h3><p class="muted">Upload a new Excel roster to replace the current member roster.</p></div></div><div class="admin-single-column"><form class="admin-card" id="roster-form">
+<h3>Upload Chapter Roster</h3>
+<label>
             Excel File (.xlsx or .xls)
-            <input
-              type="file"
-              name="file"
-              accept=".xlsx,.xls"
-              required
-            >
-          </label>
-
-          <p class="small">
+            <input accept=".xlsx,.xls" name="file" required="" type="file"/>
+</label>
+<p class="small">
             The first worksheet is used. Column headings from Excel
             become the public roster table headings.
           </p>
-
-          <button
-            class="btn primary"
-            type="submit"
-          >
+<button class="btn primary" type="submit">
             Upload Roster
           </button>
-
-          <div
-            class="form-message"
-            id="roster-message"
-          ></div>
-
-        </form>
-
-      </div>
-
-
-      <div class="admin-card manage-sessions-card">
-
-        <div class="manage-sessions-heading">
-
-          <div>
-            <p class="eyebrow">Session Management</p>
-            <h3>Manage Training & Rating Sessions</h3>
-          </div>
-
-          <button
-            class="btn secondary"
-            type="button"
-            id="refresh-admin-sessions"
-          >
-            Refresh
-          </button>
-
-        </div>
-
-        <div id="admin-session-list">
-          <div class="loading">
-            Loading sessions...
-          </div>
-        </div>
-
-      </div>
-
-
-      <!-- ==================================================
-           CHAPTER MEETINGS
-      ================================================== -->
-
-      <div class="admin-grid admin-section-gap">
-
-        <form id="meeting-form" class="admin-card">
-
-          <p class="eyebrow">Chapter Meetings</p>
-
-          <h3 id="meeting-form-title">
-            Add Chapter Meeting
-          </h3>
-
-          <input
-            type="hidden"
-            id="meeting-id"
-          >
-
-          <label>
-            Meeting Title
-            <input
-              name="title"
-              id="meeting-title"
-              placeholder="Fall Chapter Meeting"
-              required
-            >
-          </label>
-
-          <label>
-            Date
-            <input
-              type="date"
-              name="meeting_date"
-              id="meeting-date"
-              required
-            >
-          </label>
-
-          <label>
-            Time
-            <input
-              type="time"
-              name="meeting_time"
-              id="meeting-time"
-            >
-          </label>
-
-          <label>
-            Location
-            <input
-              name="location"
-              id="meeting-location"
-              placeholder="Location / Online"
-            >
-          </label>
-
-          <label>
-            Meeting Link
-            <input
-              type="url"
-              name="meeting_link"
-              id="meeting-link"
-              placeholder="https://..."
-            >
-          </label>
-
-          <label>
-            Description
-            <textarea
-              name="description"
-              id="meeting-description"
-              rows="4"
-              placeholder="Meeting agenda, details or notes"
-            ></textarea>
-          </label>
-
-          <div class="admin-form-actions">
-
-            <button
-              class="btn primary"
-              id="meeting-submit"
-              type="submit"
-            >
-              Publish Meeting
-            </button>
-
-            <button
-              class="btn secondary"
-              id="meeting-cancel"
-              type="button"
-              style="display:none;"
-            >
-              Cancel Edit
-            </button>
-
-          </div>
-
-          <div
-            class="form-message"
-            id="meeting-message"
-          ></div>
-
-        </form>
-
-
-        <div class="admin-card">
-
-          <p class="eyebrow">Meeting Management</p>
-
-          <div class="manage-sessions-heading">
-
-            <h3>Existing Chapter Meetings</h3>
-
-            <button
-              class="btn secondary"
-              type="button"
-              id="refresh-meetings"
-            >
-              Refresh
-            </button>
-
-          </div>
-
-          <div id="admin-meeting-list">
-            <div class="loading">
-              Loading meetings...
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-
-
-      <!-- ==================================================
-           BOARD MEMBERS
-      ================================================== -->
-
-      <div class="admin-grid admin-section-gap">
-
-        <form
-          id="board-form"
-          class="admin-card"
-          enctype="multipart/form-data"
-        >
-
-          <p class="eyebrow">Board Members</p>
-
-          <h3 id="board-form-title">
-            Add Board Member
-          </h3>
-
-          <input
-            type="hidden"
-            id="board-id"
-          >
-
-          <label>
-            Name
-            <input
-              name="name"
-              id="board-name"
-              placeholder="Official's Name"
-              required
-            >
-          </label>
-
-          <label>
-            Position Title
-            <input
-              name="position_title"
-              id="board-position"
-              placeholder="Chapter President"
-              required
-            >
-          </label>
-
-          <label>
-            Photo
-            <input
-              type="file"
-              name="photo"
-              id="board-photo"
-              accept=".jpg,.jpeg,.png,.webp"
-            >
-          </label>
-
-          <p class="small">
-            JPG, PNG or WebP. Maximum file size: 5 MB.
-          </p>
-
-          <div
-            id="board-current-photo"
-            class="board-current-photo"
-          ></div>
-
-          <label>
-            Responsibilities
-            <textarea
-              name="description"
-              id="board-description"
-              rows="5"
-              placeholder="Brief description of this board member's responsibilities"
-            ></textarea>
-          </label>
-
-          <label>
-            Display Order
-            <input
-              type="number"
-              name="display_order"
-              id="board-order"
-              min="0"
-              value="0"
-            >
-          </label>
-
-          <p class="small">
-            Lower numbers appear first on the public website.
-          </p>
-
-          <div class="admin-form-actions">
-
-            <button
-              class="btn primary"
-              id="board-submit"
-              type="submit"
-            >
-              Add Board Member
-            </button>
-
-            <button
-              class="btn secondary"
-              id="board-cancel"
-              type="button"
-              style="display:none;"
-            >
-              Cancel Edit
-            </button>
-
-          </div>
-
-          <div
-            class="form-message"
-            id="board-message"
-          ></div>
-
-        </form>
-
-
-        <div class="admin-card">
-
-          <p class="eyebrow">Board Management</p>
-
-          <div class="manage-sessions-heading">
-
-            <h3>Current Board Members</h3>
-
-            <button
-              class="btn secondary"
-              type="button"
-              id="refresh-board"
-            >
-              Refresh
-            </button>
-
-          </div>
-
-          <div id="admin-board-list">
-            <div class="loading">
-              Loading board members...
-            </div>
-          </div>
-
-        </div>
-
-      </div>
-<!-- ==================================================
-     MEMBER DOCUMENTS
-================================================== -->
-
-<div class="admin-grid admin-section-gap">
-
-  <!-- DOCUMENT UPLOAD / EDIT FORM -->
-
-  <form
-    id="document-form"
-    class="admin-card"
-    enctype="multipart/form-data"
-  >
-
-    <p class="eyebrow">Member Documents</p>
-
-    <h3 id="document-form-title">
+<div class="form-message" id="roster-message"></div>
+</form></div></section>
+    <section class="admin-tab-panel" data-admin-panel="documents"><div class="admin-panel-heading"><div><p class="eyebrow">Member Library</p><h3>Documents &amp; Training Resources</h3></div></div><div class="admin-grid admin-grid-clean"><form class="admin-card" enctype="multipart/form-data" id="document-form">
+<p class="eyebrow">Member Documents</p>
+<h3 id="document-form-title">
       Add Member Document
     </h3>
-
-    <input
-      type="hidden"
-      id="document-id"
-    >
-
-
-    <label>
+<input id="document-id" type="hidden"/>
+<label>
       Document Title
 
-      <input
-        type="text"
-        name="title"
-        id="document-title"
-        placeholder="2026 Chapter Meeting Minutes"
-        required
-      >
-    </label>
-
-
-    <label>
+      <input id="document-title" name="title" placeholder="2026 Chapter Meeting Minutes" required="" type="text"/>
+</label>
+<label>
       Category
 
-      <select
-        name="category"
-        id="document-category"
-      >
-        <option value="Chapter Documents">
+      <select id="document-category" name="category">
+<option value="Chapter Documents">
           Chapter Documents
         </option>
-
-        <option value="Meeting Minutes">
+<option value="Meeting Minutes">
           Meeting Minutes
         </option>
-
-        <option value="Training Resources">
+<option value="Training Resources">
           Training Resources
         </option>
-
-        <option value="Rules & Mechanics">
+<option value="Rules &amp; Mechanics">
           Rules &amp; Mechanics
         </option>
-
-        <option value="Forms">
+<option value="Forms">
           Forms
         </option>
-
-        <option value="Other">
+<option value="Other">
           Other
         </option>
-      </select>
-    </label>
-
-
-    <label>
+</select>
+</label>
+<label>
       Description
 
-      <textarea
-        name="description"
-        id="document-description"
-        rows="4"
-        placeholder="Brief description of this document"
-      ></textarea>
-    </label>
-
-
-    <label>
+      <textarea id="document-description" name="description" placeholder="Brief description of this document" rows="4"></textarea>
+</label>
+<label>
       File
 
-      <input
-        type="file"
-        name="file"
-        id="document-file"
-        accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt"
-      >
-    </label>
-
-
-    <p class="small" id="document-file-help">
+      <input accept=".pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt" id="document-file" name="file" type="file"/>
+</label>
+<p class="small" id="document-file-help">
       PDF, Word, Excel, PowerPoint or text file.
       Maximum file size: 25 MB.
     </p>
-
-
-    <div
-      id="document-current-file"
-    ></div>
-
-
-    <label>
+<div id="document-current-file"></div>
+<label>
       Display Order
 
-      <input
-        type="number"
-        name="display_order"
-        id="document-order"
-        min="0"
-        value="0"
-      >
-    </label>
-
-
-    <p class="small">
+      <input id="document-order" min="0" name="display_order" type="number" value="0"/>
+</label>
+<p class="small">
       Lower numbers appear first within their category.
     </p>
-
-
-    <div class="admin-form-actions">
-
-      <button
-        class="btn primary"
-        id="document-submit"
-        type="submit"
-      >
+<div class="admin-form-actions">
+<button class="btn primary" id="document-submit" type="submit">
         Upload Document
       </button>
-
-
-      <button
-        class="btn secondary"
-        id="document-cancel"
-        type="button"
-        style="display:none;"
-      >
+<button class="btn secondary" id="document-cancel" style="display:none;" type="button">
         Cancel Edit
       </button>
-
-    </div>
-
-
-    <div
-      class="form-message"
-      id="document-message"
-    ></div>
-
-  </form>
-
-
-  <!-- DOCUMENT MANAGEMENT -->
-
-  <div class="admin-card">
-
-    <p class="eyebrow">
+</div>
+<div class="form-message" id="document-message"></div>
+</form><div class="admin-card">
+<p class="eyebrow">
       Document Management
     </p>
-
-
-    <div class="manage-sessions-heading">
-
-      <h3>
+<div class="manage-sessions-heading">
+<h3>
         Current Member Documents
       </h3>
-
-
-      <button
-        class="btn secondary"
-        type="button"
-        id="refresh-documents"
-      >
+<button class="btn secondary" id="refresh-documents" type="button">
         Refresh
       </button>
-
-    </div>
-
-
-    <div id="admin-document-list">
-
-      <div class="loading">
+</div>
+<div id="admin-document-list">
+<div class="loading">
         Loading documents...
       </div>
-
-    </div>
-
-  </div>
-
 </div>
-
-    </div>
-
+</div></div></section>
   </div>
-
+</div>
 </section>
-
 </main>
-
-
-<script src="/admin.js"></script>
-
+<script src="/admin.js?v=8"></script>
 </body>
 </html>
-```
